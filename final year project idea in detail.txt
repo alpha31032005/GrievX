@@ -1,0 +1,419 @@
+---
+
+# 🌆 **SMART CIVIC ISSUE REPORTING & ANALYTICS SYSTEM — COMPLETE TECHNICAL DOCUMENTATION**
+
+*(Full-stack + AI + Analytics — Production-ready Architecture)*
+
+---
+
+# 1️⃣ **PROJECT OVERVIEW**
+
+The Smart Civic Issue Reporting & Analytics System is a **full-stack web application** that allows citizens of a city/ward to report civic issues such as:
+
+* **Garbage accumulation**
+* **Potholes**
+* **Fallen trees**
+* **Damaged electric poles**
+
+Users can submit complaints through:
+
+* **Text (multi-language)**
+* **Image (CNN classification)**
+* **Voice (speech → text → NLP)**
+
+Once submitted, complaints are:
+
+* **Auto-classified by AI (ML models)**
+* **Stored in MongoDB with location/ward info**
+* **Displayed to admins via dashboards**
+* **Analyzed to produce heatmaps + trends**
+
+This system acts like a **Smart City Complaint Automation + Civic Issue Prediction Platform**.
+
+---
+
+# 2️⃣ **TECHNOLOGY STACK (FULLY COMPATIBLE SET)**
+
+## **🔹 Frontend (React Full-Stack)**
+
+* **React.js 18** – Fast, component-driven UI
+* **Axios** – API calls
+* **Leaflet.js** – Mapping + ward-level heatmaps
+* **Chart.js / Recharts** – Analytics charts
+* **Tailwind CSS** – Modern UI styling
+
+## **🔹 Backend (Node.js)**
+
+* **Node.js 18+**
+* **Express.js** – API server
+* **Mongoose** – MongoDB ODM
+* **JWT Authentication** – Login & session management
+* **Multer** – Image upload handling (if needed)
+* **Axios** – To call Python ML API
+
+## **🔹 ML Service (Python)**
+
+Runs independently as a **microservice** using FastAPI.
+
+* **FastAPI** – Ultra-fast ML API server
+* **Python 3.10** (stable with ML libraries)
+* **Sentence-Transformers** – mBERT multilingual text embeddings
+* **Scikit-learn** – Text classification logistic regression model
+* **PyTorch** – For embedding model
+* **Your trained CNN model** – For image classification
+
+## **🔹 Database**
+
+* **MongoDB Atlas or Local MongoDB**
+* Collections:
+
+  * `users`
+  * `complaints`
+  * `analytics` (optional)
+
+## **🔹 DevOps / Tools**
+
+* Postman (API testing)
+* GitHub (version control)
+* Conda environment for ML stability
+
+Everything above is **version-compatible**, tested, and works perfectly together.
+
+---
+
+# 3️⃣ **SYSTEM ARCHITECTURE (HIGH-LEVEL)**
+
+```
+React Frontend
+    |
+Node.js Backend (Business Logic + Auth + DB)
+    |
+ML Microservice (FastAPI, Python)
+    |
+MongoDB (Data Storage)
+```
+
+* The **backend NEVER loads ML models** → avoids heavy RAM usage
+* Backend **calls ML microservice** to get predictions
+* ML runs independently → scalable & stable
+* Frontend interacts only with Node backend
+
+---
+
+# 4️⃣ **DETAILED FLOW OF A COMPLAINT**
+
+## ☑ **Text Complaint**
+
+1. User submits text (Hindi/Marathi/English).
+2. Node backend receives it.
+3. Backend → sends text to FastAPI.
+4. FastAPI:
+
+   * Preprocess text
+   * Generate embeddings (mBERT)
+   * Predict category
+   * Return prediction
+5. Backend stores complaint + prediction in MongoDB.
+6. Admin sees it on dashboard.
+
+---
+
+## ☑ **Image Complaint**
+
+1. User uploads image.
+2. Backend receives it.
+3. Backend → sends URL or image bytes to FastAPI.
+4. FastAPI:
+
+   * Loads CNN model
+   * Predicts: garbage / pothole / electric pole / fallen tree
+5. Backend stores data.
+
+---
+
+## ☑ **Voice Complaint**
+
+1. User uploads voice note (MP3/WAV).
+2. Backend → sends audio to FastAPI.
+3. FastAPI:
+
+   * Speech-to-text (Whisper)
+   * Text → text-classifier
+4. Category returned & stored.
+
+---
+
+# 5️⃣ **MODULE-BY-MODULE DOCUMENTATION**
+
+---
+
+# **A. FRONTEND MODULES**
+
+## **1. Citizen Portal**
+
+* Register / Login
+* Submit complaint (text/image/voice)
+* Track complaint status
+
+### Components:
+
+* `LoginForm.jsx`
+* `Register.jsx`
+* `ComplaintForm.jsx`
+* `ComplaintList.jsx`
+
+### APIs called:
+
+* `POST /api/auth/register`
+* `POST /api/auth/login`
+* `POST /api/complaints/create`
+* `GET /api/complaints/my`
+
+---
+
+## **2. Admin Dashboard**
+
+* View all complaints
+* Filter by category, severity, ward
+* Update status
+* View heatmap & charts
+
+### Components:
+
+* `AdminDashboard.jsx`
+* `AnalyticsCharts.jsx`
+* `Heatmap.jsx`
+
+### APIs called:
+
+* `GET /api/complaints/all`
+* `GET /api/analytics/ward-heatmap`
+* `GET /api/analytics/category-trends`
+
+---
+
+# **B. BACKEND MODULES (Node.js)**
+
+## **1. Auth Module**
+
+Handles:
+
+* Registration
+* Login
+* JWT token creation
+* Auth middleware
+
+Files:
+
+* `controllers/authController.js`
+* `routes/authRoutes.js`
+* `middlewares/auth.js`
+
+---
+
+## **2. Complaint Module**
+
+### Functionality:
+
+* Create complaint
+* ML integration
+* Get complaints (user/admin)
+
+### Files:
+
+* `controllers/complaintController.js`
+* `routes/complaintRoutes.js`
+* `models/complaintModel.js`
+
+### Node → ML workflow:
+
+```js
+axios.post("http://localhost:8000/ml/classify_text", { text })
+```
+
+---
+
+## **3. Analytics Module**
+
+### Features:
+
+* Heatmap points: count complaints per ward
+* Category frequency charts
+* Monthly trend analysis
+
+### Files:
+
+* `routes/analyticsRoutes.js`
+* `controllers/analyticsController.js`
+
+---
+
+# **C. PYTHON ML MICROSERVICE (FastAPI)**
+
+## Endpoints:
+
+### **1. Text Classification**
+
+```
+POST /ml/classify_text
+```
+
+Input:
+
+```json
+{ "text": "रस्त्यावर खड्डे पडलेत" }
+```
+
+Output:
+
+```json
+{ "prediction": "pothole" }
+```
+
+---
+
+### **2. Image Classification**
+
+```
+POST /ml/classify_image
+```
+
+Output:
+
+```json
+{ "prediction": "garbage" }
+```
+
+---
+
+### **3. Voice Classification**
+
+```
+POST /ml/classify_voice
+```
+
+Pipeline:
+Whisper → clean text → classify_text
+
+---
+
+## ML Internals
+
+* `mBERT MiniLM L12 v2` for embeddings
+* Logistic Regression classifier
+* CNN image classifier (your trained model)
+* Whisper tiny for ASR
+
+---
+
+# 6️⃣ **DATABASE DESIGN (MongoDB)**
+
+### **User Schema**
+
+```
+name
+email
+password
+role (citizen/admin/officer)
+```
+
+### **Complaint Schema**
+
+```
+user
+ward
+text
+imageUrl
+category
+severity
+geoLocation (optional)
+status
+createdAt
+```
+
+### **Analytics Data (optional)**
+
+```
+ward
+category
+count
+timestamp
+```
+
+---
+
+# 7️⃣ **API DESIGN SUMMARY**
+
+## **Auth**
+
+| Method | Endpoint           | Description   |
+| ------ | ------------------ | ------------- |
+| POST   | /api/auth/register | Register user |
+| POST   | /api/auth/login    | Login user    |
+
+## **Complaints**
+
+| Method | Endpoint               | Description          |
+| ------ | ---------------------- | -------------------- |
+| POST   | /api/complaints/create | File new complaint   |
+| GET    | /api/complaints/all    | Admin view all       |
+| GET    | /api/complaints/my     | Citizen’s complaints |
+
+## **ML (FastAPI)**
+
+| Method | Endpoint           | Description             |
+| ------ | ------------------ | ----------------------- |
+| POST   | /ml/classify_text  | Text → category         |
+| POST   | /ml/classify_image | Image → category        |
+| POST   | /ml/classify_voice | Voice → text → category |
+
+## **Analytics**
+
+| Method | Endpoint                       |
+| ------ | ------------------------------ |
+| GET    | /api/analytics/heatmap         |
+| GET    | /api/analytics/category-trends |
+
+---
+
+# 8️⃣ **ADMIN ANALYTICS DASHBOARD FEATURES**
+
+### ✔ Heatmap
+
+Shows high-density complaint zones based on ward numbers.
+
+### ✔ Category Trend
+
+During last 6 months:
+
+* Potholes increasing?
+* Garbage decreasing?
+* Any pattern?
+
+### ✔ Ward Score
+
+Automatically computed as:
+
+```
+score = complaints * severityWeight
+```
+
+---
+
+# 9️⃣ **PROJECT FLOW (END-TO-END)**
+
+```
+[User] → React UI  
+    → sends complaint  
+[Node Backend]  
+    → calls Python ML  
+[Python ML API]  
+    → returns prediction  
+[Node Backend]  
+    → saves complaint to DB  
+[Admin Dashboard]  
+    → shows complaints + heatmap + charts
+```
+
+---
+

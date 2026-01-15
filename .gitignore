@@ -1,0 +1,118 @@
+###############################
+# GLOBAL IGNORE RULES
+###############################
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Logs
+*.log
+logs/
+debug.log
+
+###############################
+# VIRTUAL ENVIRONMENTS
+###############################
+venv/
+env/
+ENV/
+.mlvenv/
+mlenv/
+ml-service/mlenv/
+backend/venv/
+frontend/venv/
+
+###############################
+# NODE & FRONTEND
+###############################
+node_modules/
+npm-debug.log
+yarn-error.log
+.pnpm-store/
+
+###############################
+# BUILD FILES
+###############################
+dist/
+build/
+.cache/
+.next/
+*.lock
+
+###############################
+# ENV FILES (Sensitive)
+###############################
+.env
+.env.local
+backend/.env
+frontend/.env
+ml-service/.env
+
+###############################
+# ML MODEL IGNORES
+###############################
+
+# ❗ KEEP YOUR OWN MODELS (small files)
+# ✔ text_classifier.pkl
+# ✔ label_encoder.pkl
+# ✔ image_classifier.h5 / .keras
+
+# ❌ IGNORE huge HuggingFace multilingual_embedder downloaded folder
+ml-service/app/models/multilingual_embedder/
+ml-service/app/models/multilingual_embedder/**/*
+
+# Ignore TF saved model junk folders
+saved_model/
+ml-service/app/models/*/assets/
+ml-service/app/models/*/variables/
+
+# Ignore accidental large model formats
+*.bin
+*.pt
+*.ckpt
+*.pb
+
+###############################
+# FRONTEND PUBLIC IGNORE
+###############################
+frontend/public/temp/
+frontend/public/uploads/
+
+###############################
+# BACKEND UPLOADS IGNORE
+###############################
+backend/uploads/
+backend/temp/
+
+###############################
+# EDITORS
+###############################
+.vscode/
+.idea/
+*.swp
+*.swo
+
+###############################
+# ROOT GENERATED FILES
+###############################
+package-lock.json
+yarn.lock
+
+###############################
+# OPTIONAL IGNORE (SAFE)
+###############################
+*.zip
+*.tar
+*.rar
+*.7z
+
