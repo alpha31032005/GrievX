@@ -10,6 +10,7 @@ const logger = require('./src/utils/logger');
 const authRoutes = require('./src/routes/authRoutes');
 const complaintRoutes = require('./src/routes/complaintRoutes');
 const analyticsRoutes = require('./src/routes/analyticsRoutes');
+const mlRoutes = require("./src/routes/mlRoutes");
 
 // Initialize express app
 const app = express();
@@ -21,10 +22,18 @@ connectDB();
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// CORS configuration
+// CORS configuration - allow all localhost ports in development
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: function (origin, callback) {
+      // Allow requests with no origin (mobile apps, curl, etc.)
+      if (!origin) return callback(null, true);
+      // Allow all localhost origins in development
+      if (origin.startsWith('http://localhost:')) {
+        return callback(null, true);
+      }
+      callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
   })
 );
@@ -44,6 +53,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use("/api/ml", mlRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {

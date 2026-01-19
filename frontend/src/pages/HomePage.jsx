@@ -1,6 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FiArrowRight, FiCheckCircle, FiTrendingUp, FiUsers, FiMapPin, FiGithub, FiTwitter, FiLinkedin, FiMail } from 'react-icons/fi';
+import {
+  FiArrowRight,
+  FiCheckCircle,
+  FiTrendingUp,
+  FiUsers,
+  FiMapPin,
+  FiGithub,
+  FiTwitter,
+  FiLinkedin,
+  FiMail,
+} from 'react-icons/fi';
 import { useTheme } from '../context/ThemeContext';
 
 const HomePage = () => {
@@ -9,72 +19,81 @@ const HomePage = () => {
   const features = [
     {
       icon: <FiMapPin className="w-8 h-8" />,
-      title: 'Location-Based Reporting',
-      description: 'Report issues with precise location tracking and geospatial visualization',
+      title: "Location-Based Reporting",
+      description:
+        "Report issues with precise location tracking and geospatial visualization",
     },
     {
       icon: <FiTrendingUp className="w-8 h-8" />,
-      title: 'Real-Time Analytics',
-      description: 'Track issue progress with comprehensive analytics and trending data',
+      title: "Real-Time Analytics",
+      description:
+        "Track issue progress with comprehensive analytics and trending data",
     },
     {
       icon: <FiUsers className="w-8 h-8" />,
-      title: 'Community Impact',
-      description: 'Connect with other citizens and witness real-world changes in your community',
+      title: "Community Impact",
+      description:
+        "Connect with other citizens and witness real-world changes in your community",
     },
     {
       icon: <FiCheckCircle className="w-8 h-8" />,
-      title: 'AI-Powered Classification',
-      description: 'Automatic issue categorization using advanced machine learning technology',
+      title: "AI-Powered Classification",
+      description:
+        "Automatic issue categorization using advanced machine learning technology",
     },
   ];
 
   const stats = [
-    { number: '2500+', label: 'Issues Resolved' },
-    { number: '45K+', label: 'Active Citizens' },
-    { number: '150+', label: 'Cities Participating' },
-    { number: '98%', label: 'Satisfaction Rate' },
+    { number: "2500+", label: "Issues Resolved" },
+    { number: "45K+", label: "Active Citizens" },
+    { number: "150+", label: "Cities Participating" },
+    { number: "98%", label: "Satisfaction Rate" },
   ];
 
+  // Footer Links (Non-functional but safe)
   const footerLinks = {
     Product: [
-      { name: 'Features', href: '#features' },
-      { name: 'Pricing', href: '#pricing' },
-      { name: 'Security', href: '/security' },
-      { name: 'Roadmap', href: '#roadmap' },
+      { name: "Features", href: "#" },
+      { name: "Pricing", href: "#" },
+      { name: "Security", href: "#" },
+      { name: "Roadmap", href: "#" },
     ],
     Company: [
-      { name: 'About Us', href: '#about' },
-      { name: 'Blog', href: '#blog' },
-      { name: 'Careers', href: '#careers' },
-      { name: 'Press', href: '#press' },
+      { name: "About Us", href: "#" },
+      { name: "Blog", href: "#" },
+      { name: "Careers", href: "#" },
+      { name: "Press", href: "#" },
     ],
     Legal: [
-      { name: 'Privacy Policy', href: '#privacy' },
-      { name: 'Terms of Service', href: '#terms' },
-      { name: 'Cookie Policy', href: '#cookies' },
-      { name: 'Disclaimer', href: '#disclaimer' },
+      { name: "Privacy Policy", href: "#" },
+      { name: "Terms of Service", href: "#" },
+      { name: "Cookie Policy", href: "#" },
+      { name: "Disclaimer", href: "#" },
     ],
     Support: [
-      { name: 'Help Center', href: '#help' },
-      { name: 'Contact Us', href: '#contact' },
-      { name: 'FAQ', href: '#faq' },
-      { name: 'Community', href: '#community' },
+      { name: "Help Center", href: "#" },
+      { name: "Contact Us", href: "#" },
+      { name: "FAQ", href: "#" },
+      { name: "Community", href: "#" },
     ],
   };
 
   const socialLinks = [
-    { icon: FiGithub, href: '#github', label: 'GitHub' },
-    { icon: FiTwitter, href: '#twitter', label: 'Twitter' },
-    { icon: FiLinkedin, href: '#linkedin', label: 'LinkedIn' },
-    { icon: FiMail, href: 'mailto:contact@grievx.com', label: 'Email' },
+    { icon: FiGithub, href: "#", label: "GitHub" },
+    { icon: FiTwitter, href: "#", label: "Twitter" },
+    { icon: FiLinkedin, href: "#", label: "LinkedIn" },
+    { icon: FiMail, href: "mailto:contact@grievx.com", label: "Email" },
   ];
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300">
-      {/* Hero Section */}
-      <section className={`min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 relative overflow-hidden ${isDark ? 'bg-gradient-dark' : 'bg-gradient-primary'}`}>
-        {/* Video Background */}
+      {/* ======================= HERO SECTION ======================= */}
+      <section
+        className={`min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 relative overflow-hidden ${
+          isDark ? "bg-gradient-dark" : "bg-gradient-primary"
+        }`}
+      >
+        {/* Background video */}
         <div className="absolute inset-0 overflow-hidden">
           <video
             autoPlay
@@ -83,97 +102,79 @@ const HomePage = () => {
             playsInline
             className="w-full h-full object-cover opacity-20"
           >
-            <source
-              src="/civic-background.mp4"
-              type="video/mp4"
-            />
-            Your browser does not support the video tag.
+            <source src="/civic-background.mp4" type="video/mp4" />
           </video>
         </div>
 
-        {/* Animated Background Elements */}
+        {/* Good color blur */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-white opacity-10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-20 right-10 w-72 h-72 bg-white opacity-10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse delay-2000"></div>
+          <div className="absolute top-20 left-10 w-72 h-72 bg-white opacity-10 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-20 right-10 w-72 h-72 bg-white opacity-10 rounded-full blur-3xl animate-pulse delay-2000"></div>
         </div>
 
-        <div className="max-w-7xl mx-auto text-center relative z-10">
-          <div className="space-y-8 fade-in-up">
-            {/* Main Heading */}
-            <div className="space-y-6 animate-fadeInUp">
-              <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight hover:scale-105 transition-transform duration-500 drop-shadow-lg">
-                Smart Civic System
-              </h1>
-              {/* Tagline with Barlow Font */}
-              <p className="font-barlow text-lg md:text-2xl lg:text-3xl font-semibold text-white text-opacity-100 max-w-3xl mx-auto leading-relaxed hover:text-opacity-100 transition-all duration-300 drop-shadow-md bg-gradient-to-r from-amber-300 via-rose-300 to-pink-300 bg-clip-text text-transparent hover:from-amber-200 hover:via-rose-200 hover:to-pink-200 animate-pulse tracking-wide">
-                Your voice matters—report issues and see real action happen.
-              </p>
-            </div>
+        {/* Main Hero Content */}
+        <div className="max-w-7xl mx-auto text-center relative z-10 fade-in-up space-y-10">
+          <h1 className="text-5xl md:text-7xl font-bold text-white drop-shadow-lg transition-transform hover:scale-105">
+            Smart Civic System
+          </h1>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8 animate-slideInUp">
-              <Link
-                to="/report"
-                className="px-8 py-4 bg-white text-primary-600 font-bold rounded-lg hover:bg-gray-100 transform hover:scale-110 transition-all shadow-lg flex items-center gap-2 group"
-              >
-                Report an Issue <FiArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link
-                to="/dashboard"
-                className="px-8 py-4 bg-white bg-opacity-20 text-white font-bold rounded-lg hover:bg-opacity-30 border-2 border-white transition-all backdrop-blur-sm hover:shadow-xl"
-              >
-                View Dashboard
-              </Link>
-            </div>
+          <p className="text-xl md:text-3xl text-white bg-gradient-to-r from-amber-300 via-rose-300 to-pink-300 bg-clip-text text-transparent font-semibold animate-pulse">
+            Your voice matters—report issues and see real action happen.
+          </p>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-16 text-white animate-slideInUp delay-500">
-              {stats.map((stat, idx) => (
-                <div 
-                  key={idx} 
-                  className="space-y-2 group cursor-pointer transform hover:scale-110 transition-transform duration-300 drop-shadow-md"
-                  style={{ animationDelay: `${idx * 100}ms` }}
-                >
-                  <div className="text-3xl md:text-4xl font-bold group-hover:drop-shadow-lg transition-all">
-                    {stat.number}
-                  </div>
-                  <div className="text-sm md:text-base opacity-90 group-hover:opacity-100 transition-opacity">
-                    {stat.label}
-                  </div>
-                </div>
-              ))}
-            </div>
+          {/* CTA BUTTONS — FIXED ROUTES */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slideInUp">
+            <Link
+              to="/citizen/complaint"
+              className="px-8 py-4 bg-white text-blue-700 font-bold rounded-lg hover:bg-gray-100 transition shadow-lg flex items-center gap-2"
+            >
+              Report an Issue <FiArrowRight />
+            </Link>
+
+            <Link
+              to="/citizen/dashboard"
+              className="px-8 py-4 bg-white/20 text-white font-bold rounded-lg border border-white backdrop-blur-sm hover:bg-white/30 transition"
+            >
+              View Dashboard
+            </Link>
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-10 text-white animate-slideInUp">
+            {stats.map((stat, idx) => (
+              <div
+                key={idx}
+                className="hover:scale-110 transition cursor-pointer text-center"
+              >
+                <p className="text-4xl font-bold">{stat.number}</p>
+                <p className="opacity-90">{stat.label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900">
+      {/* ======================= FEATURES ======================= */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16 animate-fadeInUp">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
-              Why Choose GrievX?
-            </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
-              Empowering citizens to drive positive change in their communities
-            </p>
-          </div>
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-gray-900 dark:text-white">
+            Why Choose GrievX?
+          </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, idx) => (
+            {features.map((f, idx) => (
               <div
                 key={idx}
-                className="p-8 rounded-xl bg-gray-50 dark:bg-gray-800 hover:shadow-2xl transition-all duration-300 group cursor-pointer transform hover:-translate-y-2 animate-fadeInUp"
-                style={{ animationDelay: `${idx * 100}ms` }}
+                className="p-8 bg-gray-50 dark:bg-gray-800 rounded-xl shadow hover:-translate-y-2 hover:shadow-2xl transition cursor-pointer"
               >
-                <div className="text-primary-600 dark:text-primary-400 mb-4 group-hover:scale-125 group-hover:rotate-6 transition-transform duration-300">
-                  {feature.icon}
+                <div className="mb-4 text-blue-600 dark:text-blue-400">
+                  {f.icon}
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-                  {feature.title}
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+                  {f.title}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400 leading-relaxed group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">
-                  {feature.description}
+                <p className="text-gray-600 dark:text-gray-400">
+                  {f.description}
                 </p>
               </div>
             ))}
@@ -181,70 +182,60 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800 transition-colors">
-        <div className="max-w-4xl mx-auto text-center space-y-8 animate-fadeInUp">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
-            Ready to Make a Difference?
-          </h2>
-          <p className="text-xl text-gray-600 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
-            Join thousands of citizens already making their communities better
-          </p>
-          <Link
-            to="/report"
-            className="inline-block px-10 py-4 bg-gradient-primary text-white font-bold rounded-lg hover:shadow-2xl transform hover:scale-110 transition-all duration-300 group"
-          >
-            Start Reporting Now
-          </Link>
-        </div>
+      {/* ======================= CTA ======================= */}
+      <section className="py-20 px-4 bg-gray-50 dark:bg-gray-800 text-center">
+        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white">
+          Ready to Make a Difference?
+        </h2>
+
+        <p className="text-lg text-gray-600 dark:text-gray-400 mt-4">
+          Join thousands of citizens already improving their communities.
+        </p>
+
+        <Link
+          to="/citizen/complaint"
+          className="inline-block mt-6 px-10 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+        >
+          Start Reporting Now
+        </Link>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 dark:bg-black text-white transition-colors">
-        {/* Main Footer Content */}
-        <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 sm:gap-8 mb-8 lg:mb-12">
-            {/* Brand Section */}
-            <div className="space-y-4 animate-fadeInUp sm:col-span-2 lg:col-span-1">
-              <div className="flex items-center space-x-2 group">
-                <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center transform group-hover:scale-110 transition-transform">
-                  <span className="text-white font-bold text-lg">🏛️</span>
-                </div>
-                <span className="text-xl font-poppins font-bold text-primary-400">GrievX</span>
+      {/* ======================= FOOTER ======================= */}
+      <footer className="bg-gray-900 text-white">
+        <div className="max-w-7xl mx-auto px-4 py-12">
+
+          {/* Brand + Social */}
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-10">
+            <div className="flex items-center gap-3">
+              <div className="bg-blue-600 w-10 h-10 rounded-lg flex items-center justify-center text-xl">
+                🏛️
               </div>
-              <p className="text-gray-400 hover:text-gray-300 transition-colors text-sm">
-                Empowering communities through smart civic engagement and real-time action.
-              </p>
-              {/* Social Links */}
-              <div className="flex space-x-3 pt-2">
-                {socialLinks.map(({ icon: Icon, href, label }) => (
-                  <a
-                    key={label}
-                    href={href}
-                    aria-label={label}
-                    className="w-9 h-9 rounded-full bg-gray-800 hover:bg-primary-600 flex items-center justify-center transition-all duration-300 transform hover:scale-110 group"
-                  >
-                    <Icon className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-                  </a>
-                ))}
-              </div>
+              <h3 className="text-2xl font-bold">GrievX</h3>
             </div>
 
-            {/* Footer Links */}
+            <div className="flex gap-3 mt-4 sm:mt-0">
+              {socialLinks.map(({ icon: Icon, href, label }) => (
+                <a
+                  key={label}
+                  href={href}
+                  className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition"
+                >
+                  <Icon className="w-5 h-5" />
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* Footer Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
             {Object.entries(footerLinks).map(([category, links]) => (
-              <div key={category} className="space-y-3 animate-fadeInUp" style={{ animationDelay: `${(Object.keys(footerLinks).indexOf(category) + 1) * 100}ms` }}>
-                <h3 className="text-base sm:text-lg font-semibold text-white hover:text-primary-400 transition-colors">
-                  {category}
-                </h3>
-                <ul className="space-y-1 sm:space-y-2">
-                  {links.map((link) => (
-                    <li key={link.name}>
-                      <a
-                        href={link.href}
-                        className="text-gray-400 hover:text-primary-400 transition-colors duration-300 flex items-center group text-sm"
-                      >
-                        <span className="w-0 h-0.5 bg-primary-400 group-hover:w-2 transition-all duration-300 mr-2"></span>
-                        {link.name}
+              <div key={category}>
+                <h4 className="font-semibold text-lg mb-3">{category}</h4>
+                <ul className="space-y-2">
+                  {links.map((l) => (
+                    <li key={l.name}>
+                      <a href="#" className="text-gray-400 hover:text-white transition">
+                        {l.name}
                       </a>
                     </li>
                   ))}
@@ -253,65 +244,9 @@ const HomePage = () => {
             ))}
           </div>
 
-          {/* Divider */}
-          <div className="border-t border-gray-800 my-6 sm:my-8"></div>
-
-          {/* Bottom Footer */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-8 mb-6 animate-fadeInUp">
-            {/* Copyright */}
-            <div className="text-gray-400 hover:text-gray-300 transition-colors text-center sm:text-left">
-              <p className="text-sm">© 2026 GrievX. All rights reserved.</p>
-              <p className="text-xs mt-1">Making communities smarter, one report at a time.</p>
-            </div>
-
-            {/* Developer Credit */}
-            <div className="text-center">
-              <p className="text-gray-400 text-sm">
-                Developed with <span className="text-red-500 animate-pulse">❤️</span> by
-              </p>
-              <a 
-                href="#nishant" 
-                className="text-primary-400 font-semibold hover:text-primary-300 transition-colors group text-sm"
-              >
-                <span className="group-hover:underline">Nishant</span>
-              </a>
-              <p className="text-gray-500 text-xs mt-1">ML Engineer</p>
-            </div>
-
-            {/* Contact & Support */}
-            <div className="text-center sm:text-right">
-              <p className="text-gray-400 mb-1 text-sm">Need Help?</p>
-              <a 
-                href="mailto:contact@grievx.com"
-                className="text-primary-400 hover:text-primary-300 transition-colors flex items-center justify-center sm:justify-end group text-sm"
-              >
-                contact@grievx.com
-                <FiMail className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-              </a>
-            </div>
+          <div className="text-center text-gray-500 mt-10">
+            © 2026 GrievX — Building smarter communities.
           </div>
-
-          {/* Additional Info */}
-          <div className="pt-4 sm:pt-6 border-t border-gray-800">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-gray-500 text-center sm:text-left">
-              <p className="hover:text-gray-400 transition-colors">
-                Version 1.0.0 • Last Updated: January 2026
-              </p>
-              <p className="sm:text-right hover:text-gray-400 transition-colors">
-                Made for communities. By the community.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Scroll to Top Button */}
-        <div className="text-center py-3 sm:py-4 border-t border-gray-800">
-          <button
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="text-gray-400 hover:text-primary-400 transition-colors text-xs sm:text-sm group"
-          >
-            <span className="inline-block group-hover:translate-y-1 transition-transform">↑</span> Back to Top
-          </button>
         </div>
       </footer>
     </div>

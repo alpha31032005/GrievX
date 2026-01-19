@@ -1,6 +1,107 @@
 const analyticsService = require('../services/analyticsService');
 const logger = require('../utils/logger');
 
+// Helper: get department from request (admin=filtered, chief=all)
+const getDept = (req) => (req.userRole === 'admin' ? req.userDepartment : null);
+
+// ─────────────────────────────────────────────────────────────
+// NEW ENDPOINTS
+// ─────────────────────────────────────────────────────────────
+
+// GET /analytics/overview
+const getOverview = async (req, res) => {
+  try {
+    const data = await analyticsService.getOverview(getDept(req));
+    res.json({ success: true, ...data });
+  } catch (e) {
+    logger.error('Overview error:', e.message);
+    res.status(500).json({ success: false, message: 'Failed to fetch overview' });
+  }
+};
+
+// GET /analytics/monthly
+const getMonthly = async (req, res) => {
+  try {
+    const data = await analyticsService.getMonthly(getDept(req), +req.query.months || 6);
+    res.json({ success: true, data });
+  } catch (e) {
+    logger.error('Monthly error:', e.message);
+    res.status(500).json({ success: false, message: 'Failed to fetch monthly data' });
+  }
+};
+
+// GET /analytics/category
+const getCategory = async (req, res) => {
+  try {
+    const data = await analyticsService.getCategoryDistribution(getDept(req));
+    res.json({ success: true, data });
+  } catch (e) {
+    logger.error('Category error:', e.message);
+    res.status(500).json({ success: false, message: 'Failed to fetch category data' });
+  }
+};
+
+// GET /analytics/resolution
+const getResolution = async (req, res) => {
+  try {
+    const data = await analyticsService.getResolutionDistribution(getDept(req));
+    res.json({ success: true, data });
+  } catch (e) {
+    logger.error('Resolution error:', e.message);
+    res.status(500).json({ success: false, message: 'Failed to fetch resolution data' });
+  }
+};
+
+// GET /analytics/map
+const getMap = async (req, res) => {
+  try {
+    const data = await analyticsService.getMapData(getDept(req));
+    res.json({ success: true, data });
+  } catch (e) {
+    logger.error('Map error:', e.message);
+    res.status(500).json({ success: false, message: 'Failed to fetch map data' });
+  }
+};
+
+// GET /analytics/activity - Recent activity logs
+const getActivity = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const data = await analyticsService.getRecentActivity(getDept(req), limit);
+    res.json({ success: true, data });
+  } catch (e) {
+    logger.error('Activity error:', e.message);
+    res.status(500).json({ success: false, message: 'Failed to fetch activity data' });
+  }
+};
+
+// GET /analytics/my-activity - User's own activity (for citizens)
+const getMyActivity = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const data = await analyticsService.getRecentActivity(null, limit, req.userId);
+    res.json({ success: true, data });
+  } catch (e) {
+    logger.error('My activity error:', e.message);
+    res.status(500).json({ success: false, message: 'Failed to fetch activity data' });
+  }
+};
+
+// GET /analytics/system - System health stats
+const getSystemStats = async (req, res) => {
+  try {
+    const data = await analyticsService.getSystemStats();
+    res.json({ success: true, ...data });
+  } catch (e) {
+    logger.error('System stats error:', e.message);
+    res.status(500).json({ success: false, message: 'Failed to fetch system stats' });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+// EXISTING ENDPOINTS (kept for backward compatibility)
+// ─────────────────────────────────────────────────────────────
+
 // Get ward heatmap data
 const getWardHeatmap = async (req, res) => {
   try {
@@ -108,6 +209,16 @@ const getCategoryByWard = async (req, res) => {
 };
 
 module.exports = {
+  // New endpoints
+  getOverview,
+  getMonthly,
+  getCategory,
+  getResolution,
+  getMap,
+  getActivity,
+  getMyActivity,
+  getSystemStats,
+  // Legacy endpoints
   getWardHeatmap,
   getCategoryTrends,
   getStatistics,

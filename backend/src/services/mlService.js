@@ -1,4 +1,5 @@
 const axios = require('axios');
+const FormData = require('form-data');
 const config = require('../config/env');
 const logger = require('../utils/logger');
 
@@ -22,21 +23,54 @@ const mlService = {
     }
   },
 
-  // Classify image using ML service
-  classifyImage: async (imageUrl) => {
+  // Classify image using ML service (supports both URL and file buffer)
+  classifyImage: async (imageInput) => {
     try {
-      const response = await axios.post(
-        `${config.ML_SERVICE_URL}${config.ML_IMAGE_ENDPOINT}`,
-        { image_url: imageUrl },
-        { timeout: 60000 }
-      );
+      let response;
+      
+      // If it's a URL string, send as JSON
+      if (typeof imageInput === 'string') {
+        response = await axios.post(
+          `${config.ML_SERVICE_URL}${config.ML_IMAGE_ENDPOINT}`,
+          { image_url: imageInput },
+          { timeout: 60000 }
+        );
+      } 
+      // If it's a file buffer/stream, send as FormData
+      else if (imageInput.buffer || imageInput.path) {
+        const formData = new FormData();
+        
+        // Append the buffer with proper metadata
+        formData.append('file', imageInput.buffer, {
+          filename: imageInput.originalname || 'image.jpg',
+          contentType: imageInput.mimetype || 'image/jpeg',
+        });
+        
+        response = await axios.post(
+          `${config.ML_SERVICE_URL}${config.ML_IMAGE_ENDPOINT}`,
+          formData,
+          { 
+            timeout: 60000,
+            headers: {
+              ...formData.getHeaders(),
+            },
+          }
+        );
+      } else {
+        throw new Error('Invalid image input format');
+      }
 
+      // Return standardized response
       return {
-        category: response.data.category || response.data.prediction,
+        prediction: response.data.prediction || response.data.category,
         confidence: response.data.confidence || 0,
+        category: response.data.prediction || response.data.category,
       };
     } catch (error) {
       logger.error('ML Service - Image Classification Error:', error.message);
+      if (error.response) {
+        logger.error('ML Service Response:', error.response.data);
+      }
       throw new Error('Failed to classify image');
     }
   },

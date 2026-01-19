@@ -24,12 +24,17 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['citizen', 'admin', 'officer'],
+      enum: ['citizen', 'admin', 'chief'],
       default: 'citizen',
+    },
+    department: {
+      type: String,
+      enum: ['garbage', 'electric_poles', 'fallen_trees', 'potholes', 'misc', null],
+      default: null, // Only admins have department
     },
     ward: {
       type: Number,
-      default: null, // Optional: officer/admin can be assigned to specific ward
+      default: null,
     },
     phone: {
       type: String,

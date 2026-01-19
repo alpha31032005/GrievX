@@ -1,12 +1,26 @@
 const mongoose = require('mongoose');
 const config = require('../config/env');
 
+// ─────────────────────────────────────────────────────────────
+// Category → Department mapping
+// ─────────────────────────────────────────────────────────────
+const CATEGORY_TO_DEPT = {
+  garbage: 'garbage',
+  pothole: 'potholes',
+  potholes: 'potholes',
+  fallen_trees: 'fallen_trees',
+  electric_poles: 'electric_poles',
+  electricity: 'electric_poles',
+  default: 'misc',
+};
+
 const complaintSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: [true, 'User ID is required'],
+      index: true,
     },
     ward: {
       type: Number,
@@ -26,17 +40,29 @@ const complaintSchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      enum: config.COMPLAINT_CATEGORIES,
+      enum: [...config.COMPLAINT_CATEGORIES, ...config.DEPARTMENTS],
       required: [true, 'Category is required'],
+    },
+    // Auto-derived from category for role-based filtering
+    department: {
+      type: String,
+      enum: config.DEPARTMENTS,
+      index: true,
     },
     categoryConfidence: {
       type: Number,
-      default: 0, // ML model confidence score (0-1)
+      default: 0,
     },
     severity: {
       type: String,
       enum: config.SEVERITY_LEVELS,
       default: 'medium',
+    },
+    priority: {
+      type: String,
+      enum: ['low', 'medium', 'high', 'critical'],
+      default: 'medium',
+      index: true,
     },
     imageUrl: {
       type: String,
@@ -44,32 +70,26 @@ const complaintSchema = new mongoose.Schema(
     },
     imageMLPrediction: {
       type: String,
-      default: null, // Prediction from image model
+      default: null,
     },
     imageMLConfidence: {
       type: Number,
       default: 0,
     },
     location: {
-      type: {
-        type: String,
-        enum: ['Point'],
-        default: 'Point',
-      },
-      coordinates: {
-        type: [Number], // [longitude, latitude]
-        default: null,
-      },
+      type: { type: String, enum: ['Point'] },
+      coordinates: { type: [Number] },
     },
     status: {
       type: String,
       enum: config.COMPLAINT_STATUS,
       default: 'open',
+      index: true,
     },
     assignedTo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      default: null, // Officer/Admin assigned to this complaint
+      default: null,
     },
     resolution: {
       type: String,
@@ -78,6 +98,7 @@ const complaintSchema = new mongoose.Schema(
     resolutionDate: {
       type: Date,
       default: null,
+      index: true,
     },
     upvotes: {
       type: Number,
@@ -96,7 +117,6 @@ const complaintSchema = new mongoose.Schema(
     createdAt: {
       type: Date,
       default: Date.now,
-      index: true, // For faster sorting
     },
     updatedAt: {
       type: Date,
@@ -106,9 +126,27 @@ const complaintSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Create index for location-based queries (for heatmaps)
-complaintSchema.index({ location: '2dsphere' });
-complaintSchema.index({ ward: 1, category: 1, createdAt: -1 });
-complaintSchema.index({ userId: 1, createdAt: -1 });
+// ─────────────────────────────────────────────────────────────
+// PRE-SAVE: Auto-map category → department
+// ─────────────────────────────────────────────────────────────
+complaintSchema.pre('save', function (next) {
+  if (this.isModified('category') || !this.department) {
+    this.department = CATEGORY_TO_DEPT[this.category] || CATEGORY_TO_DEPT.default;
+  }
+  // Sync priority with severity if not set
+  if (!this.priority) this.priority = this.severity;
+  next();
+});
+
+// ─────────────────────────────────────────────────────────────
+// INDEXES: Optimized for analytics + role-based queries
+// ─────────────────────────────────────────────────────────────
+complaintSchema.index({ location: '2dsphere' });                    // Geospatial (heatmap, nearby)
+complaintSchema.index({ department: 1, status: 1, createdAt: -1 }); // Admin dept queries
+complaintSchema.index({ department: 1, createdAt: -1 });            // Monthly trends by dept
+complaintSchema.index({ status: 1, resolutionDate: 1 });            // Resolution analytics
+complaintSchema.index({ ward: 1, category: 1, createdAt: -1 });     // Ward analytics
+complaintSchema.index({ userId: 1, createdAt: -1 });                // Citizen's complaints
+complaintSchema.index({ createdAt: -1 });                           // Global timeline
 
 module.exports = mongoose.model('Complaint', complaintSchema);

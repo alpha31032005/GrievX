@@ -2,6 +2,11 @@ const Complaint = require('../models/Complaint');
 const config = require('../config/env');
 const logger = require('../utils/logger');
 
+// ─────────────────────────────────────────────────────────────
+// HELPER: Build department filter based on role
+// ─────────────────────────────────────────────────────────────
+const deptMatch = (dept) => (dept ? { department: dept } : {});
+
 const analyticsService = {
   // Get ward-wise complaint distribution (for heatmap)
   getWardHeatmap: async (startDate = null, endDate = null) => {
@@ -189,6 +194,207 @@ const analyticsService = {
       throw error;
     }
   },
+
+  // ─────────────────────────────────────────────────────────────
+  // NEW: Overview stats (filtered by department)
+  // ─────────────────────────────────────────────────────────────
+  getOverview: async (dept = null) => {
+    const match = deptMatch(dept);
+    const [result] = await Complaint.aggregate([
+      { $match: match },
+      {
+        $facet: {
+          total: [{ $count: 'n' }],
+          resolved: [{ $match: { status: 'resolved' } }, { $count: 'n' }],
+          pending: [{ $match: { status: { $in: ['open', 'pending'] } } }, { $count: 'n' }],
+          avgTime: [
+            { $match: { status: 'resolved', resolutionDate: { $exists: true } } },
+            { $project: { days: { $divide: [{ $subtract: ['$resolutionDate', '$createdAt'] }, 86400000] } } },
+            { $group: { _id: null, avg: { $avg: '$days' } } },
+          ],
+        },
+      },
+    ]);
+    const total = result.total[0]?.n || 0;
+    const resolved = result.resolved[0]?.n || 0;
+    return {
+      total,
+      resolved,
+      pending: result.pending[0]?.n || 0,
+      avgResolutionDays: +(result.avgTime[0]?.avg || 0).toFixed(1),
+      resolutionRate: total ? +((resolved / total) * 100).toFixed(1) : 0,
+    };
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // NEW: Monthly trends (last 6 months)
+  // ─────────────────────────────────────────────────────────────
+  getMonthly: async (dept = null, months = 6) => {
+    const start = new Date();
+    start.setMonth(start.getMonth() - months);
+    return Complaint.aggregate([
+      { $match: { ...deptMatch(dept), createdAt: { $gte: start } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } },
+          complaints: { $sum: 1 },
+          resolved: { $sum: { $cond: [{ $eq: ['$status', 'resolved'] }, 1, 0] } },
+        },
+      },
+      { $sort: { _id: 1 } },
+      { $project: { month: '$_id', complaints: 1, resolved: 1, _id: 0 } },
+    ]);
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // NEW: Category distribution
+  // ─────────────────────────────────────────────────────────────
+  getCategoryDistribution: async (dept = null) => {
+    return Complaint.aggregate([
+      { $match: deptMatch(dept) },
+      { $group: { _id: '$category', value: { $sum: 1 } } },
+      { $project: { name: '$_id', value: 1, _id: 0 } },
+      { $sort: { value: -1 } },
+    ]);
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // NEW: Resolution time distribution
+  // ─────────────────────────────────────────────────────────────
+  getResolutionDistribution: async (dept = null) => {
+    return Complaint.aggregate([
+      { $match: { ...deptMatch(dept), status: 'resolved', resolutionDate: { $exists: true } } },
+      { $project: { days: { $divide: [{ $subtract: ['$resolutionDate', '$createdAt'] }, 86400000] } } },
+      {
+        $bucket: {
+          groupBy: '$days',
+          boundaries: [0, 1, 3, 7, Infinity],
+          default: '>7',
+          output: { count: { $sum: 1 } },
+        },
+      },
+    ]).then((res) =>
+      res.map((b) => ({
+        range: b._id === 0 ? '<24h' : b._id === 1 ? '1-3 days' : b._id === 3 ? '3-7 days' : '>7 days',
+        count: b.count,
+      }))
+    );
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // NEW: Map data (lat/lng points)
+  // ─────────────────────────────────────────────────────────────
+  getMapData: async (dept = null) => {
+    return Complaint.aggregate([
+      { $match: { ...deptMatch(dept), 'location.coordinates': { $exists: true } } },
+      {
+        $project: {
+          lat: { $arrayElemAt: ['$location.coordinates', 1] },
+          lng: { $arrayElemAt: ['$location.coordinates', 0] },
+          category: 1,
+          status: 1,
+          title: 1,
+        },
+      },
+    ]);
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // NEW: Recent activity logs (for dashboards)
+  // ─────────────────────────────────────────────────────────────
+  getRecentActivity: async (dept = null, limit = 10, userId = null) => {
+    const match = { ...deptMatch(dept) };
+    if (userId) match.userId = userId;
+    
+    const complaints = await Complaint.find(match)
+      .sort({ updatedAt: -1 })
+      .limit(limit)
+      .populate('userId', 'name email')
+      .lean();
+
+    return complaints.map((c) => {
+      const timeAgo = getTimeAgo(c.updatedAt);
+      let action, icon;
+      
+      if (c.status === 'resolved') {
+        action = `Complaint "${c.title?.substring(0, 40)}..." marked as resolved`;
+        icon = '✅';
+      } else if (c.status === 'in_progress') {
+        action = `Complaint "${c.title?.substring(0, 40)}..." is being processed`;
+        icon = '🔧';
+      } else if (c.status === 'open' || c.status === 'pending') {
+        const isNew = (new Date() - new Date(c.createdAt)) < 86400000; // 24h
+        if (isNew) {
+          action = `New complaint filed: "${c.title?.substring(0, 40)}..."`;
+          icon = '📋';
+        } else {
+          action = `Complaint "${c.title?.substring(0, 40)}..." pending review`;
+          icon = '⏳';
+        }
+      } else {
+        action = `Complaint "${c.title?.substring(0, 40)}..." status: ${c.status}`;
+        icon = '📌';
+      }
+
+      return {
+        id: c._id,
+        action,
+        icon,
+        timeAgo,
+        category: c.category,
+        department: c.department,
+        status: c.status,
+        userName: c.userId?.name || 'Unknown',
+      };
+    });
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // NEW: System health stats
+  // ─────────────────────────────────────────────────────────────
+  getSystemStats: async () => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const [todayStats, weekStats, totalStats] = await Promise.all([
+      Complaint.aggregate([
+        { $match: { createdAt: { $gte: today } } },
+        { $group: { _id: null, count: { $sum: 1 }, resolved: { $sum: { $cond: [{ $eq: ['$status', 'resolved'] }, 1, 0] } } } },
+      ]),
+      Complaint.aggregate([
+        { $match: { createdAt: { $gte: lastWeek } } },
+        { $group: { _id: null, count: { $sum: 1 }, resolved: { $sum: { $cond: [{ $eq: ['$status', 'resolved'] }, 1, 0] } } } },
+      ]),
+      Complaint.aggregate([
+        { $group: { _id: null, count: { $sum: 1 }, resolved: { $sum: { $cond: [{ $eq: ['$status', 'resolved'] }, 1, 0] } } } },
+      ]),
+    ]);
+
+    return {
+      todayComplaints: todayStats[0]?.count || 0,
+      todayResolved: todayStats[0]?.resolved || 0,
+      weekComplaints: weekStats[0]?.count || 0,
+      weekResolved: weekStats[0]?.resolved || 0,
+      totalComplaints: totalStats[0]?.count || 0,
+      totalResolved: totalStats[0]?.resolved || 0,
+      systemHealth: 'operational',
+      uptime: '99.9%',
+    };
+  },
 };
+
+// Helper: format time ago
+function getTimeAgo(date) {
+  const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+  if (seconds < 60) return 'Just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} min${minutes > 1 ? 's' : ''} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days} day${days > 1 ? 's' : ''} ago`;
+  return new Date(date).toLocaleDateString();
+}
 
 module.exports = analyticsService;

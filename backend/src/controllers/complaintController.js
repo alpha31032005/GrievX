@@ -3,8 +3,64 @@ const User = require('../models/User');
 const mlService = require('../services/mlService');
 const config = require('../config/env');
 const logger = require('../utils/logger');
+const { buildDepartmentFilter } = require('../middleware/auth');
 
-// Create new complaint
+// Simple complaint creation from FormData (frontend citizen form)
+const createComplaintSimple = async (req, res) => {
+  try {
+    const { description, location, category } = req.body;
+    
+    if (!description) {
+      return res.status(400).json({ success: false, message: 'Description is required' });
+    }
+    
+    if (!category) {
+      return res.status(400).json({ success: false, message: 'Category is required' });
+    }
+
+    // Build complaint data
+    const complaintData = {
+      userId: req.userId,
+      title: description.substring(0, 100), // Use first 100 chars as title
+      description: location ? `${description}\n\nLocation: ${location}` : description,
+      category: category.toLowerCase(),
+      ward: 1, // Default ward, can be updated later
+      severity: 'medium',
+      status: 'open',
+    };
+
+    // Handle image upload - store as base64
+    if (req.file) {
+      const base64Image = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+      complaintData.imageUrl = base64Image;
+    }
+
+    // Create and save complaint
+    const complaint = new Complaint(complaintData);
+    await complaint.save();
+
+    logger.info(`Complaint created: ${complaint._id} by user ${req.userId}, category: ${category}, department: ${complaint.department}`);
+
+    res.status(201).json({
+      success: true,
+      message: 'Complaint submitted successfully',
+      complaint: {
+        id: complaint._id,
+        category: complaint.category,
+        department: complaint.department,
+        status: complaint.status,
+      },
+    });
+  } catch (error) {
+    logger.error('Create complaint error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create complaint: ' + error.message,
+    });
+  }
+};
+
+// Create new complaint (original with validation)
 const createComplaint = async (req, res) => {
   try {
     const { title, description, ward, category, severity, latitude, longitude, imageUrl } = req.validated;
@@ -100,15 +156,18 @@ const getMyComplaints = async (req, res) => {
   }
 };
 
-// Get all complaints (admin/officer)
+// Get all complaints (admin/chief) - auto-filtered by department
 const getAllComplaints = async (req, res) => {
   try {
     const { page = 1, limit = 10, status, category, ward } = req.query;
     const skip = (page - 1) * limit;
 
-    const query = {};
+    // Build query with department filter
+    const departmentFilter = buildDepartmentFilter(req);
+    const query = { ...departmentFilter };
+    
     if (status) query.status = status;
-    if (category) query.category = category;
+    if (category) query.category = category; // Override if explicitly filtered
     if (ward) query.ward = parseInt(ward);
 
     const complaints = await Complaint.find(query)
@@ -263,6 +322,7 @@ const upvoteComplaint = async (req, res) => {
 
 module.exports = {
   createComplaint,
+  createComplaintSimple,
   getMyComplaints,
   getAllComplaints,
   getComplaint,

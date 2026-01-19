@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "concurrently": "^9.2.1",
+    "multer": "^2.0.2",
+    "react-dropzone": "^14.3.8"
+  },
+  "scripts": {
+    "both": "concurrently \"npm run start-front\" \"npm run start-back\"",
+    "start-front": "npm --prefix frontend run dev",
+    "start-back": "npm --prefix backend run dev"
+  }
+}
