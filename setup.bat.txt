@@ -1,0 +1,171 @@
+@echo off
+REM Smart Civic System - Windows Setup Script
+
+echo ========================================
+echo Smart Civic Issue Reporting System Setup
+echo ========================================
+echo.
+
+REM Create root directory
+mkdir smart-civic-system
+cd smart-civic-system
+
+REM ========================================
+REM ML SERVICE STRUCTURE
+REM ========================================
+echo Creating ML Service structure...
+
+mkdir ml-service\app\models
+mkdir ml-service\app\routes
+mkdir ml-service\app\services
+mkdir ml-service\app\utils
+
+type nul > ml-service\app\__init__.py
+type nul > ml-service\app\main.py
+type nul > ml-service\app\config.py
+
+type nul > ml-service\app\models\__init__.py
+type nul > ml-service\app\models\model_loader.py
+
+type nul > ml-service\app\routes\__init__.py
+type nul > ml-service\app\routes\text_routes.py
+type nul > ml-service\app\routes\image_routes.py
+
+type nul > ml-service\app\services\__init__.py
+type nul > ml-service\app\services\text_service.py
+type nul > ml-service\app\services\image_service.py
+
+type nul > ml-service\app\utils\__init__.py
+type nul > ml-service\app\utils\preprocessing.py
+type nul > ml-service\app\utils\validators.py
+
+type nul > ml-service\requirements.txt
+type nul > ml-service\.env
+type nul > ml-service\README.md
+type nul > ml-service\.gitignore
+
+REM ========================================
+REM BACKEND STRUCTURE
+REM ========================================
+echo Creating Backend structure...
+
+mkdir backend\src\config
+mkdir backend\src\models
+mkdir backend\src\controllers
+mkdir backend\src\routes
+mkdir backend\src\middleware
+mkdir backend\src\services
+mkdir backend\src\utils
+
+type nul > backend\src\config\db.js
+type nul > backend\src\config\env.js
+
+type nul > backend\src\models\User.js
+type nul > backend\src\models\Complaint.js
+
+type nul > backend\src\controllers\authController.js
+type nul > backend\src\controllers\complaintController.js
+type nul > backend\src\controllers\analyticsController.js
+
+type nul > backend\src\routes\authRoutes.js
+type nul > backend\src\routes\complaintRoutes.js
+type nul > backend\src\routes\analyticsRoutes.js
+
+type nul > backend\src\middleware\auth.js
+type nul > backend\src\middleware\errorHandler.js
+type nul > backend\src\middleware\validator.js
+
+type nul > backend\src\services\mlService.js
+type nul > backend\src\services\analyticsService.js
+
+type nul > backend\src\utils\logger.js
+type nul > backend\src\utils\helpers.js
+
+type nul > backend\server.js
+type nul > backend\package.json
+type nul > backend\.env
+type nul > backend\.gitignore
+type nul > backend\README.md
+
+REM ========================================
+REM FRONTEND STRUCTURE
+REM ========================================
+echo Creating Frontend structure...
+
+mkdir frontend\public
+mkdir frontend\src\components\common
+mkdir frontend\src\components\citizen
+mkdir frontend\src\components\admin
+mkdir frontend\src\pages
+mkdir frontend\src\services
+mkdir frontend\src\context
+mkdir frontend\src\hooks
+mkdir frontend\src\utils
+
+type nul > frontend\public\index.html
+
+type nul > frontend\src\components\common\Navbar.jsx
+type nul > frontend\src\components\common\Loader.jsx
+type nul > frontend\src\components\common\ErrorBoundary.jsx
+
+type nul > frontend\src\components\citizen\ComplaintForm.jsx
+type nul > frontend\src\components\citizen\ComplaintList.jsx
+type nul > frontend\src\components\citizen\ComplaintCard.jsx
+
+type nul > frontend\src\components\admin\Dashboard.jsx
+type nul > frontend\src\components\admin\ComplaintTable.jsx
+type nul > frontend\src\components\admin\Heatmap.jsx
+type nul > frontend\src\components\admin\AnalyticsCharts.jsx
+
+type nul > frontend\src\pages\LoginPage.jsx
+type nul > frontend\src\pages\RegisterPage.jsx
+type nul > frontend\src\pages\CitizenPortal.jsx
+type nul > frontend\src\pages\AdminPortal.jsx
+
+type nul > frontend\src\services\api.js
+type nul > frontend\src\services\authService.js
+type nul > frontend\src\services\complaintService.js
+type nul > frontend\src\services\analyticsService.js
+
+type nul > frontend\src\context\AuthContext.jsx
+
+type nul > frontend\src\hooks\useAuth.js
+
+type nul > frontend\src\utils\constants.js
+
+type nul > frontend\src\App.jsx
+type nul > frontend\src\index.js
+type nul > frontend\src\index.css
+
+type nul > frontend\package.json
+type nul > frontend\tailwind.config.js
+type nul > frontend\.gitignore
+type nul > frontend\README.md
+
+REM ========================================
+REM DOCUMENTATION
+REM ========================================
+echo Creating Documentation...
+
+mkdir docs
+type nul > docs\API_DOCUMENTATION.md
+type nul > docs\DEPLOYMENT_GUIDE.md
+type nul > docs\USER_MANUAL.md
+
+REM ========================================
+REM ROOT FILES
+REM ========================================
+type nul > .gitignore
+type nul > README.md
+
+echo.
+echo ========================================
+echo Setup Complete!
+echo ========================================
+echo.
+echo Next steps:
+echo 1. Copy your ML models to ml-service\app\models\
+echo 2. Open the folder in VS Code
+echo 3. Follow the installation instructions
+echo.
+pause
