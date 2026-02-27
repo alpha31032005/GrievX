@@ -3,6 +3,9 @@ const router = express.Router();
 const analyticsController = require('../controllers/analyticsController');
 const { auth, authAdminOrChief } = require('../middleware/auth');
 
+// Public endpoint (no authentication required)
+router.get('/public/stats', analyticsController.getPublicStats);
+
 // New endpoints (role-filtered: admin=dept, chief=all)
 router.get('/overview', auth, authAdminOrChief, analyticsController.getOverview);
 router.get('/monthly', auth, authAdminOrChief, analyticsController.getMonthly);

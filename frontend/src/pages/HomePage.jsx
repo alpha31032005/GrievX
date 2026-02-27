@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   FiArrowRight,
@@ -12,9 +12,36 @@ import {
   FiMail,
 } from 'react-icons/fi';
 import { useTheme } from '../context/ThemeContext';
+import api from '../services/api';
 
 const HomePage = () => {
   const { isDark } = useTheme();
+  const [stats, setStats] = useState({
+    totalComplaints: 0,
+    resolvedComplaints: 0,
+    activeCitizens: 0,
+    satisfactionRate: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  // Fetch real-time statistics
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await api.get('/analytics/public/stats');
+        if (response.data.success) {
+          setStats(response.data.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch statistics:', error);
+        // Fallback to demo data if fetch fails
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
 
   const features = [
     {
@@ -43,11 +70,31 @@ const HomePage = () => {
     },
   ];
 
-  const stats = [
-    { number: "2500+", label: "Issues Resolved" },
-    { number: "45K+", label: "Active Citizens" },
-    { number: "150+", label: "Cities Participating" },
-    { number: "98%", label: "Satisfaction Rate" },
+  // Format numbers for display
+  const formatNumber = (num) => {
+    if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'K+';
+    }
+    return num.toString();
+  };
+
+  const displayStats = [
+    { 
+      number: loading ? '...' : formatNumber(stats.resolvedComplaints), 
+      label: "Issues Resolved" 
+    },
+    { 
+      number: loading ? '...' : formatNumber(stats.activeCitizens), 
+      label: "Active Citizens" 
+    },
+    { 
+      number: loading ? '...' : formatNumber(stats.totalComplaints), 
+      label: "Total Complaints" 
+    },
+    { 
+      number: loading ? '...' : `${stats.satisfactionRate}%`, 
+      label: "Resolution Rate" 
+    },
   ];
 
   // Footer Links (Non-functional but safe)
@@ -141,7 +188,7 @@ const HomePage = () => {
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-10 text-white animate-slideInUp">
-            {stats.map((stat, idx) => (
+            {displayStats.map((stat, idx) => (
               <div
                 key={idx}
                 className="hover:scale-110 transition cursor-pointer text-center"

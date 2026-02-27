@@ -208,6 +208,17 @@ const getCategoryByWard = async (req, res) => {
   }
 };
 
+// GET /analytics/public/stats - Public homepage statistics (no auth required)
+const getPublicStats = async (req, res) => {
+  try {
+    const data = await analyticsService.getPublicStats();
+    res.json({ success: true, data });
+  } catch (e) {
+    logger.error('Public stats error:', e.message);
+    res.status(500).json({ success: false, message: 'Failed to fetch public statistics' });
+  }
+};
+
 module.exports = {
   // New endpoints
   getOverview,
@@ -218,6 +229,8 @@ module.exports = {
   getActivity,
   getMyActivity,
   getSystemStats,
+  // Public endpoint
+  getPublicStats,
   // Legacy endpoints
   getWardHeatmap,
   getCategoryTrends,

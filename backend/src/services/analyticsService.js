@@ -382,6 +382,65 @@ const analyticsService = {
       uptime: '99.9%',
     };
   },
+
+  // ─────────────────────────────────────────────────────────────
+  // PUBLIC: Homepage statistics (no auth required)
+  // ─────────────────────────────────────────────────────────────
+  getPublicStats: async () => {
+    try {
+      const User = require('../models/User');
+      
+      const [complaintStats] = await Complaint.aggregate([
+        {
+          $facet: {
+            total: [{ $count: 'n' }],
+            resolved: [{ $match: { status: 'resolved' } }, { $count: 'n' }],
+            inProgress: [{ $match: { status: 'in_progress' } }, { $count: 'n' }],
+            open: [{ $match: { status: 'open' } }, { $count: 'n' }],
+            avgResolutionTime: [
+              { $match: { status: 'resolved', resolutionDate: { $exists: true } } },
+              { 
+                $project: { 
+                  days: { 
+                    $divide: [
+                      { $subtract: ['$resolutionDate', '$createdAt'] }, 
+                      86400000 
+                    ] 
+                  } 
+                } 
+              },
+              { $group: { _id: null, avg: { $avg: '$days' } } },
+            ],
+          },
+        },
+      ]);
+
+      // Count active citizens (users with citizen role)
+      const activeCitizens = await User.countDocuments({ role: 'citizen', isActive: true });
+      
+      const totalComplaints = complaintStats.total[0]?.n || 0;
+      const resolvedComplaints = complaintStats.resolved[0]?.n || 0;
+      const avgResolutionDays = complaintStats.avgResolutionTime[0]?.avg || 0;
+      
+      // Calculate satisfaction rate (resolved complaints / total * 100)
+      const satisfactionRate = totalComplaints > 0 
+        ? ((resolvedComplaints / totalComplaints) * 100).toFixed(1)
+        : 0;
+
+      return {
+        totalComplaints,
+        resolvedComplaints,
+        activeCitizens,
+        satisfactionRate: parseFloat(satisfactionRate),
+        inProgressComplaints: complaintStats.inProgress[0]?.n || 0,
+        openComplaints: complaintStats.open[0]?.n || 0,
+        avgResolutionDays: parseFloat(avgResolutionDays.toFixed(1)),
+      };
+    } catch (error) {
+      logger.error('Public stats error:', error.message);
+      throw error;
+    }
+  },
 };
 
 // Helper: format time ago
