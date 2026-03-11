@@ -395,8 +395,34 @@ const analyticsService = {
           $facet: {
             total: [{ $count: 'n' }],
             resolved: [{ $match: { status: 'resolved' } }, { $count: 'n' }],
+            rejected: [{ $match: { status: 'rejected' } }, { $count: 'n' }],
             inProgress: [{ $match: { status: 'in_progress' } }, { $count: 'n' }],
             open: [{ $match: { status: 'open' } }, { $count: 'n' }],
+            
+            // Resolution time distribution
+            resolutionTimeDistribution: [
+              { $match: { status: 'resolved', resolutionDate: { $exists: true } } },
+              { 
+                $project: { 
+                  days: { 
+                    $divide: [
+                      { $subtract: ['$resolutionDate', '$createdAt'] }, 
+                      86400000 
+                    ] 
+                  } 
+                } 
+              },
+              {
+                $bucket: {
+                  groupBy: '$days',
+                  boundaries: [0, 7, 15, 10000],
+                  default: 'other',
+                  output: { count: { $sum: 1 } }
+                }
+              }
+            ],
+            
+            // Average resolution time
             avgResolutionTime: [
               { $match: { status: 'resolved', resolutionDate: { $exists: true } } },
               { 
@@ -411,6 +437,40 @@ const analyticsService = {
               },
               { $group: { _id: null, avg: { $avg: '$days' } } },
             ],
+            
+            // Category distribution for charts
+            categoryDistribution: [
+              {
+                $group: {
+                  _id: '$category',
+                  count: { $sum: 1 }
+                }
+              },
+              { $sort: { count: -1 } },
+              { $limit: 10 }
+            ],
+            
+            // Monthly trends (last 6 months)
+            monthlyTrends: [
+              {
+                $match: {
+                  createdAt: { 
+                    $gte: new Date(new Date().setMonth(new Date().getMonth() - 6)) 
+                  }
+                }
+              },
+              {
+                $group: {
+                  _id: {
+                    year: { $year: '$createdAt' },
+                    month: { $month: '$createdAt' },
+                    status: '$status'
+                  },
+                  count: { $sum: 1 }
+                }
+              },
+              { $sort: { '_id.year': 1, '_id.month': 1 } }
+            ]
           },
         },
       ]);
@@ -420,21 +480,88 @@ const analyticsService = {
       
       const totalComplaints = complaintStats.total[0]?.n || 0;
       const resolvedComplaints = complaintStats.resolved[0]?.n || 0;
+      const rejectedComplaints = complaintStats.rejected[0]?.n || 0;
+      const inProgressComplaints = complaintStats.inProgress[0]?.n || 0;
+      const openComplaints = complaintStats.open[0]?.n || 0;
+      const pendingComplaints = openComplaints + inProgressComplaints;
       const avgResolutionDays = complaintStats.avgResolutionTime[0]?.avg || 0;
       
-      // Calculate satisfaction rate (resolved complaints / total * 100)
-      const satisfactionRate = totalComplaints > 0 
+      // Calculate percentages
+      const resolvedPercentage = totalComplaints > 0 
         ? ((resolvedComplaints / totalComplaints) * 100).toFixed(1)
         : 0;
+      const rejectedPercentage = totalComplaints > 0 
+        ? ((rejectedComplaints / totalComplaints) * 100).toFixed(1)
+        : 0;
+      const pendingPercentage = totalComplaints > 0 
+        ? ((pendingComplaints / totalComplaints) * 100).toFixed(1)
+        : 0;
+        
+      // Process resolution time distribution
+      const timeDistribution = {
+        under7Days: 0,
+        from7To15Days: 0,
+        moreThan15Days: 0
+      };
+      
+      complaintStats.resolutionTimeDistribution.forEach(bucket => {
+        if (bucket._id === 0) {
+          timeDistribution.under7Days = bucket.count;
+        } else if (bucket._id === 7) {
+          timeDistribution.from7To15Days = bucket.count;
+        } else if (bucket._id === 15) {
+          timeDistribution.moreThan15Days = bucket.count;
+        }
+      });
+      
+      // Format category distribution
+      const categoryData = complaintStats.categoryDistribution.map(cat => ({
+        name: cat._id || 'Uncategorized',
+        count: cat.count
+      }));
+      
+      // Format monthly trends
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const monthlyData = {};
+      
+      complaintStats.monthlyTrends.forEach(item => {
+        const monthKey = `${monthNames[item._id.month - 1]} ${item._id.year}`;
+        if (!monthlyData[monthKey]) {
+          monthlyData[monthKey] = { month: monthKey, resolved: 0, pending: 0, rejected: 0 };
+        }
+        if (item._id.status === 'resolved') {
+          monthlyData[monthKey].resolved = item.count;
+        } else if (item._id.status === 'rejected') {
+          monthlyData[monthKey].rejected = item.count;
+        } else {
+          monthlyData[monthKey].pending += item.count;
+        }
+      });
+      
+      const monthlyTrends = Object.values(monthlyData);
 
       return {
+        // Basic counts
         totalComplaints,
         resolvedComplaints,
+        rejectedComplaints,
+        pendingComplaints,
+        inProgressComplaints,
+        openComplaints,
         activeCitizens,
-        satisfactionRate: parseFloat(satisfactionRate),
-        inProgressComplaints: complaintStats.inProgress[0]?.n || 0,
-        openComplaints: complaintStats.open[0]?.n || 0,
         avgResolutionDays: parseFloat(avgResolutionDays.toFixed(1)),
+        
+        // Percentages
+        resolvedPercentage: parseFloat(resolvedPercentage),
+        rejectedPercentage: parseFloat(rejectedPercentage),
+        pendingPercentage: parseFloat(pendingPercentage),
+        
+        // Resolution time distribution
+        resolutionTimeDistribution: timeDistribution,
+        
+        // Chart data
+        categoryDistribution: categoryData,
+        monthlyTrends: monthlyTrends,
       };
     } catch (error) {
       logger.error('Public stats error:', error.message);

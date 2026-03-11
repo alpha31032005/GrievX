@@ -2,6 +2,7 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const config = require('../config/env');
 const logger = require('../utils/logger');
+const emailService = require('../services/emailService');
 
 // Generate JWT token with role and department
 const generateToken = (payload) => {
@@ -181,4 +182,119 @@ const updateProfile = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getProfile, updateProfile };
+// ─────────────────────────────────────────────────────────────
+// REQUEST OTP for Login
+// ─────────────────────────────────────────────────────────────
+const requestOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
+    // Check if user exists
+    const user = await User.findOne({ email }).select('+otp');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Check rate limiting - max 3 attempts in 15 minutes
+    if (user.otp && user.otp.attempts >= 3 && user.otp.expiresAt > new Date()) {
+      return res.status(429).json({
+        success: false,
+        message: 'Too many OTP requests. Please try again after 15 minutes.',
+      });
+    }
+
+    // Generate OTP
+    const otp = emailService.generateOTP();
+    const hashedOTP = emailService.hashOTP(otp);
+
+    // Update user with OTP (reset attempts if previous OTP expired)
+    const now = new Date();
+    const isExpired = !user.otp?.expiresAt || user.otp.expiresAt < now;
+    
+    user.otp = {
+      code: hashedOTP,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+      attempts: isExpired ? 1 : (user.otp.attempts || 0) + 1,
+    };
+    await user.save();
+
+    logger.info(`OTP generated and saved for ${email}, expires at ${user.otp.expiresAt}`);
+
+    // Send OTP via email
+    await emailService.sendOTPEmail(user, otp);
+
+    logger.info(`OTP requested for ${email}`);
+    res.json({
+      success: true,
+      message: 'OTP sent to your email address',
+      expiresIn: 600, // seconds
+    });
+  } catch (error) {
+    logger.error('Request OTP error:', error.message);
+    res.status(500).json({ success: false, message: 'Failed to send OTP' });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+// VERIFY OTP and Login
+// ─────────────────────────────────────────────────────────────
+const verifyOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ success: false, message: 'Email and OTP are required' });
+    }
+
+    // Find user with OTP
+    const user = await User.findOne({ email }).select('+otp');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    logger.info(`Verifying OTP for ${email}, has OTP: ${!!user.otp}, has code: ${!!user.otp?.code}`);
+
+    // Check if OTP exists
+    if (!user.otp || !user.otp.code || !user.otp.expiresAt) {
+      logger.error(`No OTP found for ${email}. OTP object:`, user.otp);
+      return res.status(400).json({ success: false, message: 'No OTP found. Please request a new one.' });
+    }
+
+    // Check if OTP expired
+    if (new Date() > user.otp.expiresAt) {
+      return res.status(401).json({ success: false, message: 'OTP has expired. Please request a new one.' });
+    }
+
+    // Verify OTP
+    const hashedOTP = emailService.hashOTP(otp);
+    if (user.otp.code !== hashedOTP) {
+      return res.status(401).json({ success: false, message: 'Invalid OTP. Please try again.' });
+    }
+
+    // Clear OTP after successful login
+    user.otp = undefined;
+    user.isEmailVerified = true;
+    await user.save();
+
+    // Generate token
+    const token = generateToken({
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      department: user.department,
+    });
+
+    logger.info(`User logged in with OTP: ${email}`);
+    res.json({ success: true, token, user: user.toJSON() });
+  } catch (error) {
+    logger.error('Verify OTP error:', error.message);
+    res.status(500).json({ success: false, message: 'Login failed' });
+  }
+};
+
+module.exports = { register, login, getProfile, updateProfile, requestOTP, verifyOTP };

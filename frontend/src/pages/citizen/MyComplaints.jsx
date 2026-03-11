@@ -6,15 +6,22 @@ import api from '../../services/api';
 export default function MyComplaints() {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
+    console.log('Fetching complaints...');
+    console.log('Token:', localStorage.getItem('token') ? 'exists' : 'missing');
     api.get('/complaints/user/me')
       .then((res) => {
+        console.log('API Response:', res.data);
+        console.log('Complaints array:', res.data.complaints || res.data);
         setComplaints(res.data.complaints || res.data || []);
         setLoading(false);
       })
       .catch((err) => {
         console.error('Error fetching complaints:', err);
+        console.error('Error response:', err.response?.data);
+        setError(err.response?.data?.message || err.message || 'Failed to load complaints');
         setLoading(false);
       });
   }, []);
@@ -56,7 +63,7 @@ export default function MyComplaints() {
         </div>
 
         {/* Header */}
-        <h1 className="text-4xl font-bold text-primary-600 dark:text-primary-400 mb-2">
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
           My Complaints
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mb-8">
@@ -67,6 +74,17 @@ export default function MyComplaints() {
           <div className="text-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
             <p className="mt-4 text-gray-600 dark:text-gray-400">Loading your complaints...</p>
+          </div>
+        ) : error ? (
+          <div className="text-center py-20 bg-red-50 dark:bg-red-900/20 rounded-2xl shadow-md border-2 border-red-200 dark:border-red-800">
+            <p className="text-red-600 dark:text-red-400 text-lg font-semibold mb-2">Error Loading Complaints</p>
+            <p className="text-red-500 dark:text-red-300 text-sm">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+            >
+              Retry
+            </button>
           </div>
         ) : complaints.length === 0 ? (
           <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-2xl shadow-md">
@@ -97,21 +115,38 @@ export default function MyComplaints() {
                   )}
                 </div>
 
-                {/* Category */}
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white capitalize">
-                  {complaint.category || 'General Issue'}
-                </h3>
+                {/* Category & ID */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white capitalize">
+                      {complaint.category?.replace('_', ' ') || 'General Issue'}
+                    </h3>
+                    <span className="text-xs font-mono text-gray-500 dark:text-gray-400">
+                      #{complaint._id.slice(-8).toUpperCase()}
+                    </span>
+                  </div>
+                </div>
 
                 {/* Description */}
                 <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3">
                   {complaint.description || 'No description provided'}
                 </p>
 
-                {/* Location */}
-                {complaint.location && (
+                {/* Location - Show locationName (human-readable) if available */}
+                {complaint.locationName && (
                   <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 text-sm">
                     <FiMapPin className="w-4 h-4" />
-                    <span className="truncate">{complaint.location}</span>
+                    <span className="truncate">{complaint.locationName}</span>
+                  </div>
+                )}
+
+                {/* GPS Coordinates (if available) */}
+                {complaint.location?.coordinates && (
+                  <div className="flex items-center gap-2 text-gray-500 dark:text-gray-500 text-xs">
+                    <FiMapPin className="w-3 h-3" />
+                    <span className="font-mono">
+                      {complaint.location.coordinates[1].toFixed(4)}, {complaint.location.coordinates[0].toFixed(4)}
+                    </span>
                   </div>
                 )}
 

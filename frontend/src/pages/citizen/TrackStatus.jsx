@@ -94,14 +94,15 @@ export default function TrackStatus() {
       });
   }, []);
 
-  // Filter by complaint ID
+  // Filter by complaint ID or category
   const handleSearch = (value) => {
     setSearchId(value);
     if (!value.trim()) {
       setFilteredComplaints(complaints);
     } else {
       const filtered = complaints.filter(c => 
-        c._id.toLowerCase().includes(value.toLowerCase())
+        (c._id && c._id.toLowerCase().includes(value.toLowerCase())) ||
+        (c.category && c.category.toLowerCase().replace('_', ' ').includes(value.toLowerCase()))
       );
       setFilteredComplaints(filtered);
     }
@@ -142,7 +143,7 @@ export default function TrackStatus() {
         </div>
 
         {/* Header */}
-        <h1 className="text-4xl font-bold text-primary-600 dark:text-primary-400 mb-2">
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
           Track Complaint Status
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mb-8">
@@ -157,7 +158,7 @@ export default function TrackStatus() {
               type="text"
               value={searchId}
               onChange={(e) => handleSearch(e.target.value)}
-              placeholder="Search by Complaint ID..."
+              placeholder="Search by Complaint ID or Category..."
               className="w-full pl-12 pr-4 py-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition"
             />
           </div>

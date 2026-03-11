@@ -15,6 +15,14 @@ from app.config import settings
 class TextClassificationService:
     """Service for classifying civic issue text complaints"""
     
+    # Label mapping: ML model labels → Backend expected labels
+    LABEL_MAPPING = {
+        'fallen_tree': 'fallen_trees',
+        'electric_pole': 'electric_poles',
+        'pothole': 'pothole',  # Keep as-is for COMPLAINT_CATEGORIES
+        'garbage': 'garbage',
+    }
+    
     def __init__(self):
         """Initialize service with models"""
         self.text_model = None
@@ -22,6 +30,18 @@ class TextClassificationService:
         self.label_encoder = None  # ADD THIS
         self.preprocessor = TextPreprocessor()
         self.categories = settings.CATEGORIES
+    
+    def normalize_category(self, category: str) -> str:
+        """
+        Normalize ML model prediction to backend-expected format
+        
+        Args:
+            category: Raw prediction from model (e.g., 'fallen_tree')
+            
+        Returns:
+            Backend-compatible category (e.g., 'fallen_trees')
+        """
+        return self.LABEL_MAPPING.get(category, category)
     
     def load_models(self):
         """Load ML models if not already loaded"""
@@ -99,6 +119,9 @@ class TextClassificationService:
             else:
                 prediction = prediction_encoded
             
+            # Step 6.5: Normalize category to backend format
+            normalized_prediction = self.normalize_category(prediction)
+            
             # Step 7: Get prediction probabilities (if available)
             confidence = None
             class_probabilities = None
@@ -113,16 +136,17 @@ class TextClassificationService:
                 else:
                     class_names = self.categories
                 
+                # Normalize class names in probabilities dict
                 class_probabilities = {
-                    category: float(prob)
+                    self.normalize_category(category): float(prob)
                     for category, prob in zip(class_names, probabilities)
                 }
             
-            logger.success(f"✓ Predicted category: {prediction}")
+            logger.success(f"✓ Predicted category: {prediction} → {normalized_prediction}")
             
             return {
                 "success": True,
-                "prediction": prediction,
+                "prediction": normalized_prediction,
                 "confidence": confidence,
                 "probabilities": class_probabilities,
                 "original_text": text,

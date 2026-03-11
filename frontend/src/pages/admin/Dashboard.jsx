@@ -11,9 +11,11 @@ import {
   FiServer,
   FiClock,
   FiTrendingUp,
+  FiMap,
 } from "react-icons/fi";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
+import { MapWithFilters } from "../../components/map";
 import api from "../../services/api";
 
 const AdminDashboard = () => {
@@ -25,6 +27,7 @@ const AdminDashboard = () => {
   const [showSystemModal, setShowSystemModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activityLoading, setActivityLoading] = useState(true);
+  const [complaints, setComplaints] = useState([]);
 
   useEffect(() => {
     // Fetch overview stats
@@ -39,10 +42,15 @@ const AdminDashboard = () => {
       .finally(() => setLoading(false));
 
     // Fetch recent activity
-    api.get('/analytics/activity?limit=5')
+    api.get('/analytics/activity?limit=25')
       .then((res) => setRecentActivity(res.data.data || []))
       .catch(() => setRecentActivity([]))
       .finally(() => setActivityLoading(false));
+
+    // Fetch complaints for map
+    api.get('/complaints/all?limit=500')
+      .then((res) => setComplaints(res.data.complaints || []))
+      .catch(() => setComplaints([]));
   }, []);
 
   const fetchSystemStats = async () => {
@@ -73,11 +81,15 @@ const AdminDashboard = () => {
 
         {/* Header */}
         <div>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
-            Admin Dashboard ⚙️
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white capitalize">
+            {department 
+              ? `${department.replace(/_/g, ' ')}'s Dashboard` 
+              : user?.role === 'chief' 
+                ? "Chief Officer's Dashboard" 
+                : "Admin Dashboard"}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
-            {department ? `Department: ${department.replace('_', ' ')}` : 'All Departments'} • Monitor civic activities
+            {department ? `Department: ${department.replace(/_/g, ' ')}` : 'All Departments'} • Monitor civic activities
           </p>
         </div>
 
@@ -183,7 +195,7 @@ const AdminDashboard = () => {
             Recent Activity Log
           </h2>
 
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[420px] overflow-y-auto pr-2 custom-scrollbar">
             {activityLoading ? (
               <div className="flex justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -213,6 +225,15 @@ const AdminDashboard = () => {
               ))
             )}
           </div>
+        </div>
+
+        {/* Complaint Map Section */}
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <FiMap className="text-primary-600" />
+            Complaint Locations
+          </h2>
+          <MapWithFilters complaints={complaints} />
         </div>
 
       </div>

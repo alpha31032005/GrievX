@@ -19,7 +19,7 @@ const CitizenDashboard = () => {
 
   useEffect(() => {
     // Fetch user's own recent activity
-    api.get('/analytics/my-activity?limit=5')
+    api.get('/analytics/my-activity?limit=25')
       .then((res) => setRecentActivity(res.data.data || []))
       .catch(() => setRecentActivity([]))
       .finally(() => setActivityLoading(false));
@@ -39,11 +39,11 @@ const CitizenDashboard = () => {
 
           {/* Header */}
           <div>
-            <h1 className="text-4xl font-bold text-primary-600 dark:text-primary-400">
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white capitalize mb-2">
               Welcome, {user?.name || 'Citizen'}!
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Manage your civic reports and track their progress.
+              Manage your civic reports and track their progress seamlessly.
             </p>
           </div>
 
@@ -133,7 +133,7 @@ const CitizenDashboard = () => {
             <FiAlertTriangle className="text-accent-warning" /> Recent Activity
           </h2>
 
-          <div className="space-y-4">
+            <div className="space-y-4 max-h-[420px] overflow-y-auto pr-2 custom-scrollbar">
             {activityLoading ? (
               <div className="flex justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>

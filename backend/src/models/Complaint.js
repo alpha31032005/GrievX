@@ -80,6 +80,12 @@ const complaintSchema = new mongoose.Schema(
       type: { type: String, enum: ['Point'] },
       coordinates: { type: [Number] },
     },
+    locationName: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+      default: null,
+    },
     status: {
       type: String,
       enum: config.COMPLAINT_STATUS,

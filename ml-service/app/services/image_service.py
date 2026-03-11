@@ -17,11 +17,34 @@ from app.config import settings
 class ImageClassificationService:
     """Service for classifying civic issue images"""
     
+    # Label mapping: Ensure consistency with backend expected values
+    LABEL_MAPPING = {
+        'fallen_tree': 'fallen_trees',
+        'electric_pole': 'electric_poles',
+        'pothole': 'pothole',
+        'potholes': 'potholes',
+        'garbage': 'garbage',
+        'fallen_trees': 'fallen_trees',
+        'electric_poles': 'electric_poles',
+    }
+    
     def __init__(self):
         """Initialize service"""
         self.image_model = None
         self.preprocessor = ImagePreprocessor()
         self.categories = settings.CATEGORIES
+    
+    def normalize_category(self, category: str) -> str:
+        """
+        Normalize category to backend-expected format
+        
+        Args:
+            category: Category from model or config
+            
+        Returns:
+            Backend-compatible category
+        """
+        return self.LABEL_MAPPING.get(category, category)
     
     def load_model(self):
         """Load CNN model if not already loaded"""
@@ -95,20 +118,23 @@ class ImageClassificationService:
             predicted_category = self.categories[predicted_class_idx]
             confidence = float(predictions[0][predicted_class_idx])
             
-            # Get all class probabilities
+            # Step 6.5: Normalize category to backend format
+            normalized_category = self.normalize_category(predicted_category)
+            
+            # Get all class probabilities with normalized keys
             class_probabilities = {
-                category: float(prob)
+                self.normalize_category(category): float(prob)
                 for category, prob in zip(self.categories, predictions[0])
             }
             
             logger.success(
-                f"✓ Predicted category: {predicted_category} "
+                f"✓ Predicted category: {predicted_category} → {normalized_category} "
                 f"(confidence: {confidence:.2%})"
             )
             
             return {
                 "success": True,
-                "prediction": predicted_category,
+                "prediction": normalized_category,
                 "confidence": confidence,
                 "probabilities": class_probabilities,
                 "image_size": pil_image.size,

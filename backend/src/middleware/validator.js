@@ -59,6 +59,26 @@ const validatePagination = (data) => {
   return schema.validate(data);
 };
 
+// OTP request validation
+const validateOTPRequest = (data) => {
+  const schema = Joi.object({
+    email: Joi.string().email().required(),
+  });
+  return schema.validate(data);
+};
+
+// OTP verify validation
+const validateOTPVerify = (data) => {
+  const schema = Joi.object({
+    email: Joi.string().email().required(),
+    otp: Joi.string().length(6).pattern(/^[0-9]+$/).required().messages({
+      'string.length': 'OTP must be 6 digits',
+      'string.pattern.base': 'OTP must contain only numbers',
+    }),
+  });
+  return schema.validate(data);
+};
+
 // Middleware to validate request
 const validate = (validationFunc) => {
   return (req, res, next) => {
@@ -80,5 +100,7 @@ module.exports = {
   validateComplaint,
   validateStatusUpdate,
   validatePagination,
+  validateOTPRequest,
+  validateOTPVerify,
   validate,
 };

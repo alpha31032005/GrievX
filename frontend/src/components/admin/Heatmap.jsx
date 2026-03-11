@@ -17,9 +17,9 @@ function HeatLayer({ points }) {
   return null;
 }
 
-export default function ComplaintHeatmap({ points = [], center = [19.076, 72.877] }) {
+export default function ComplaintHeatmap({ points = [], center = [20.7931, 76.6997] }) {
   return (
-    <MapContainer center={center} zoom={12} className="h-96 w-full rounded-lg">
+    <MapContainer center={center} zoom={13} className="h-96 w-full rounded-lg">
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       <HeatLayer points={points} />
     </MapContainer>

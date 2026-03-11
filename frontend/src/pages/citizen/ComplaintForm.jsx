@@ -1,13 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import ImageUploader from "../../components/citizen/ImageUploader";
-import { FiCpu, FiLoader, FiCheckCircle, FiArrowLeft, FiHome, FiMapPin } from "react-icons/fi";
+import { FiCpu, FiLoader, FiCheckCircle, FiArrowLeft, FiHome, FiMapPin, FiNavigation, FiAlertCircle, FiRefreshCw } from "react-icons/fi";
 import { useTheme } from "../../context/ThemeContext";
+import useGeolocation from "../../hooks/useGeolocation";
 import api from "../../services/api";
 
 const ComplaintForm = () => {
   const { isDark } = useTheme();
   const navigate = useNavigate();
+  const geo = useGeolocation();
   
   const [formData, setFormData] = useState({
     description: "",
@@ -133,6 +135,16 @@ const ComplaintForm = () => {
       submitData.append("category", bestPrediction.category);
       submitData.append("image", formData.image);
       
+      // Attach geo-coordinates if available
+      if (geo.latitude && geo.longitude) {
+        submitData.append("latitude", geo.latitude);
+        submitData.append("longitude", geo.longitude);
+      }
+      // Attach human-readable location name if typed
+      if (formData.location) {
+        submitData.append("locationName", formData.location);
+      }
+      
       await api.post("/complaints", submitData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -182,7 +194,7 @@ const ComplaintForm = () => {
 
             {/* Header */}
             <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-primary-600 dark:text-primary-400">
+                <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
                 File a New Complaint
               </h1>
               <p className="text-gray-600 dark:text-gray-400 mt-2">
@@ -231,6 +243,57 @@ const ComplaintForm = () => {
                   placeholder="e.g., Main Street near City Hall"
                   className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 focus:border-primary-500 dark:focus:border-primary-400 outline-none transition"
                 />
+              </div>
+
+              {/* Auto Geo-Location Capture */}
+              <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                    <FiNavigation className="w-4 h-4 text-primary-500" />
+                    GPS Location (Auto-detected)
+                  </h4>
+                  {geo.error && (
+                    <button
+                      type="button"
+                      onClick={geo.retry}
+                      className="flex items-center gap-1 text-xs text-primary-600 dark:text-primary-400 hover:underline"
+                    >
+                      <FiRefreshCw className="w-3 h-3" />
+                      Retry
+                    </button>
+                  )}
+                </div>
+
+                {geo.loading ? (
+                  <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                    <FiLoader className="w-4 h-4 animate-spin" />
+                    Detecting your location...
+                  </div>
+                ) : geo.latitude && geo.longitude ? (
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 grid grid-cols-2 gap-3">
+                      <div className="px-3 py-2 rounded-md bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                        <p className="text-[10px] uppercase tracking-wider text-green-600 dark:text-green-400 font-medium">Latitude</p>
+                        <p className="text-sm font-mono font-semibold text-green-700 dark:text-green-300">{geo.latitude.toFixed(6)}</p>
+                      </div>
+                      <div className="px-3 py-2 rounded-md bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                        <p className="text-[10px] uppercase tracking-wider text-green-600 dark:text-green-400 font-medium">Longitude</p>
+                        <p className="text-sm font-mono font-semibold text-green-700 dark:text-green-300">{geo.longitude.toFixed(6)}</p>
+                      </div>
+                    </div>
+                    <FiCheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
+                    <FiAlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <span>{geo.error || "Location unavailable. Complaint can still be submitted."}</span>
+                  </div>
+                )}
+                {geo.accuracy && (
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">
+                    Accuracy: ±{Math.round(geo.accuracy)}m
+                  </p>
+                )}
               </div>
 
               {/* Image Uploader */}

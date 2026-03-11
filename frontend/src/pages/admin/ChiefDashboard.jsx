@@ -19,7 +19,7 @@ export default function ChiefDashboard() {
 
   const fetchRecentActivity = async () => {
     try {
-      const res = await api.get('/analytics/activity?limit=8');
+      const res = await api.get('/analytics/activity?limit=25');
       setRecentActivity(res.data.data || []);
     } catch {
       setRecentActivity([]);
@@ -206,7 +206,8 @@ export default function ChiefDashboard() {
         </div>
       </div>
 
-      <h1 className="text-3xl font-bold text-primary-600 dark:text-primary-400">Analytics & Reports</h1>
+      <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Chief Officer Reports</h1>
+      <p className="text-gray-600 dark:text-gray-400 mt-2 mb-8">System-wide analytics and comparative performance reporting.</p>
 
       {/* Metrics Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -256,7 +257,7 @@ export default function ChiefDashboard() {
           <FiActivity className="text-primary-600" />
           Recent Activity Log
         </h2>
-        <div className="space-y-3">
+          <div className="space-y-3 max-h-[420px] overflow-y-auto pr-2 custom-scrollbar">
           {activityLoading ? (
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>

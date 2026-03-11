@@ -1,6 +1,7 @@
 const Complaint = require('../models/Complaint');
 const User = require('../models/User');
 const mlService = require('../services/mlService');
+const emailService = require('../services/emailService');
 const config = require('../config/env');
 const logger = require('../utils/logger');
 const { buildDepartmentFilter } = require('../middleware/auth');
@@ -8,7 +9,7 @@ const { buildDepartmentFilter } = require('../middleware/auth');
 // Simple complaint creation from FormData (frontend citizen form)
 const createComplaintSimple = async (req, res) => {
   try {
-    const { description, location, category } = req.body;
+    const { description, location, category, latitude, longitude, locationName } = req.body;
     
     if (!description) {
       return res.status(400).json({ success: false, message: 'Description is required' });
@@ -29,6 +30,21 @@ const createComplaintSimple = async (req, res) => {
       status: 'open',
     };
 
+    // Add geo-coordinates if provided
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
+    if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+      complaintData.location = {
+        type: 'Point',
+        coordinates: [lng, lat], // GeoJSON: [longitude, latitude]
+      };
+    }
+
+    // Add human-readable location name
+    if (locationName) {
+      complaintData.locationName = locationName;
+    }
+
     // Handle image upload - store as base64
     if (req.file) {
       const base64Image = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
@@ -40,6 +56,18 @@ const createComplaintSimple = async (req, res) => {
     await complaint.save();
 
     logger.info(`Complaint created: ${complaint._id} by user ${req.userId}, category: ${category}, department: ${complaint.department}`);
+
+    // Send confirmation email to user
+    try {
+      const user = await User.findById(req.userId);
+      if (user && user.email) {
+        await emailService.sendComplaintConfirmation(user, complaint);
+        logger.info(`Confirmation email sent to ${user.email} for complaint ${complaint._id}`);
+      }
+    } catch (emailError) {
+      logger.error(`Failed to send confirmation email: ${emailError.message}`);
+      // Don't fail the request if email fails
+    }
 
     res.status(201).json({
       success: true,
@@ -108,6 +136,18 @@ const createComplaint = async (req, res) => {
 
     logger.info(`Complaint created: ${complaint._id} by user ${req.userId}`);
 
+    // Send confirmation email to user
+    try {
+      const user = await User.findById(req.userId);
+      if (user && user.email) {
+        await emailService.sendComplaintConfirmation(user, complaint);
+        logger.info(`Confirmation email sent to ${user.email} for complaint ${complaint._id}`);
+      }
+    } catch (emailError) {
+      logger.error(`Failed to send confirmation email: ${emailError.message}`);
+      // Don't fail the request if email fails
+    }
+
     res.status(201).json({
       success: true,
       message: 'Complaint submitted successfully',
@@ -128,6 +168,16 @@ const getMyComplaints = async (req, res) => {
     const { page = 1, limit = 10 } = req.query;
     const skip = (page - 1) * limit;
 
+    logger.info(`Fetching complaints for userId: ${req.userId} (type: ${typeof req.userId})`);
+
+    // Try to find ANY complaint first to debug
+    const anyComplaint = await Complaint.findOne({}).select('userId');
+    if (anyComplaint) {
+      logger.info(`Sample complaint userId: ${anyComplaint.userId} (type: ${typeof anyComplaint.userId})`);
+    } else {
+      logger.warn('No complaints found in database at all');
+    }
+
     const complaints = await Complaint.find({ userId: req.userId })
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -136,6 +186,8 @@ const getMyComplaints = async (req, res) => {
       .populate('assignedTo', 'name email');
 
     const total = await Complaint.countDocuments({ userId: req.userId });
+
+    logger.info(`Found ${complaints.length} complaints for user ${req.userId} (total: ${total})`);
 
     res.json({
       success: true,
@@ -149,9 +201,11 @@ const getMyComplaints = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get my complaints error:', error.message);
+    logger.error('Stack trace:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch complaints',
+      error: error.message
     });
   }
 };
@@ -230,7 +284,7 @@ const updateComplaintStatus = async (req, res) => {
   try {
     const { status, resolution } = req.body;
 
-    const complaint = await Complaint.findById(req.params.id);
+    const complaint = await Complaint.findById(req.params.id).populate('userId', 'name email');
     if (!complaint) {
       return res.status(404).json({
         success: false,
@@ -238,6 +292,7 @@ const updateComplaintStatus = async (req, res) => {
       });
     }
 
+    const previousStatus = complaint.status;
     complaint.status = status;
     if (resolution) complaint.resolution = resolution;
     if (status === 'resolved') {
@@ -247,6 +302,17 @@ const updateComplaintStatus = async (req, res) => {
     await complaint.save();
 
     logger.info(`Complaint ${req.params.id} status updated to ${status}`);
+
+    // Send status update email to user
+    try {
+      if (complaint.userId && complaint.userId.email) {
+        await emailService.sendComplaintStatusUpdate(complaint.userId, complaint, previousStatus);
+        logger.info(`Status update email sent to ${complaint.userId.email} for complaint ${complaint._id}`);
+      }
+    } catch (emailError) {
+      logger.error(`Failed to send status update email: ${emailError.message}`);
+      // Don't fail the request if email fails
+    }
 
     res.json({
       success: true,
@@ -279,9 +345,20 @@ const assignComplaint = async (req, res) => {
       req.params.id,
       { assignedTo: officerId },
       { new: true }
-    ).populate('assignedTo', 'name email');
+    ).populate('assignedTo', 'name email').populate('userId', 'name email');
 
     logger.info(`Complaint ${req.params.id} assigned to ${officer.email}`);
+
+    // Send assignment notification email to the complaint owner
+    try {
+      if (complaint.userId && complaint.userId.email) {
+        await emailService.sendComplaintAssignment(complaint.userId, complaint, officer);
+        logger.info(`Assignment notification email sent to ${complaint.userId.email} for complaint ${complaint._id}`);
+      }
+    } catch (emailError) {
+      logger.error(`Failed to send assignment notification email: ${emailError.message}`);
+      // Don't fail the request if email fails
+    }
 
     res.json({
       success: true,

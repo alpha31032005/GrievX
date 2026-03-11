@@ -44,6 +44,19 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    otp: {
+      type: {
+        code: { type: String },
+        expiresAt: { type: Date },
+        attempts: { type: Number, default: 0 },
+      },
+      select: false,
+      default: undefined,
+    },
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
     createdAt: {
       type: Date,
       default: Date.now,

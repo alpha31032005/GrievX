@@ -59,9 +59,10 @@ const ManageComplaints = () => {
   };
 
   const filteredData = complaints.filter((c) =>
-    (c.category && c.category.toLowerCase().includes(search.toLowerCase())) ||
+    (c.category && c.category.toLowerCase().replace('_', ' ').includes(search.toLowerCase())) ||
     (c.status && c.status.toLowerCase().includes(search.toLowerCase())) ||
-    (c.description && c.description.toLowerCase().includes(search.toLowerCase()))
+    (c.description && c.description.toLowerCase().includes(search.toLowerCase())) ||
+    (c._id && c._id.toLowerCase().includes(search.toLowerCase()))
   );
 
   // Badge colors
@@ -112,11 +113,11 @@ const ManageComplaints = () => {
         </div>
 
         {/* Header */}
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-6">
-          Manage Complaints 🛠️
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-white capitalize mb-6">
+          {user?.role === 'chief' ? 'Chief Officer Management' : (user?.department ? `${user.department.replace(/_/g, ' ')} Management` : 'Manage Complaints')}
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mb-10">
-          {user?.role === 'chief' ? 'Chief view of all civic issues across all departments.' : 'Admin view of ' + (user?.department || 'department') + ' complaints.'}
+          {user?.role === 'chief' ? 'Chief view of all civic issues across all departments.' : 'Admin view of ' + (user?.department ? user.department.replace(/_/g, ' ') : 'department') + ' complaints.'}
         </p>
 
         {loading ? (
@@ -131,7 +132,7 @@ const ManageComplaints = () => {
           <FiSearch className="text-gray-500 dark:text-gray-300 w-5 h-5 mr-3" />
           <input
             type="text"
-            placeholder="Search complaints..."
+            placeholder="Search by ID, category, or status..."
             className="w-full bg-transparent outline-none text-gray-800 dark:text-gray-200"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -151,6 +152,7 @@ const ManageComplaints = () => {
               } text-left text-sm uppercase`}
             >
               <tr>
+                <th className="p-4">Complaint ID</th>
                 <th className="p-4">User</th>
                 <th className="p-4">Category</th>
                 <th className="p-4">Location</th>
@@ -168,9 +170,12 @@ const ManageComplaints = () => {
                     isDark ? "border-gray-700" : "border-gray-200"
                   } hover:bg-gray-50 dark:hover:bg-gray-700 transition`}
                 >
-                  <td className="p-4">{c.user || "Citizen"}</td>
-                  <td className="p-4 capitalize">{c.category}</td>
-                  <td className="p-4">{c.location || "N/A"}</td>
+                  <td className="p-4 font-mono text-sm">#{c._id.slice(-8).toUpperCase()}</td>
+                  <td className="p-4 capitalize">{c.userId?.name?.split(' ')[0] || c.user?.split(' ')[0] || "Citizen"}</td>
+                  <td className="p-4 capitalize">{c.category?.replace('_', ' ')}</td>
+                  <td className="p-4">
+                    {c.locationName || (c.location?.coordinates ? `${c.location.coordinates[1].toFixed(4)}, ${c.location.coordinates[0].toFixed(4)}` : "Location not provided")}
+                  </td>
 
                   {/* Status Badge */}
                   <td className="p-4">
