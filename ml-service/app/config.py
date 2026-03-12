@@ -21,8 +21,8 @@ class Settings(BaseSettings):
     
     # API Settings
     API_HOST: str = "0.0.0.0"
-    API_PORT: int = 8000
-    API_RELOAD: bool = True
+    API_PORT: int = Field(default=8000, env="PORT")  # Read from PORT env var, default to 8000
+    API_RELOAD: bool = Field(default=False, env="API_RELOAD")  # Disable reload in production
     
     # Model Paths - Using absolute paths for Windows compatibility
     BASE_DIR: Path = Path(__file__).resolve().parent
@@ -43,10 +43,10 @@ class Settings(BaseSettings):
     # CORS Settings
     ALLOWED_ORIGINS: List[str] = [
         "http://localhost:3000",  # React dev server
-        "http://localhost:5173",  # Vite dev server
+        "http://localhost:5173",  # Vite dev server  
         "http://localhost:5000",  # Backend server
     ]
-    EXTRA_CORS_ORIGINS: str = ""  # Comma-separated production origins via env var
+    EXTRA_CORS_ORIGINS: str = Field(default="", env="CORS_ORIGINS")  # Comma-separated production origins
     
     # Logging
     LOG_LEVEL: str = "INFO"

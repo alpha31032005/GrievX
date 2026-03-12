@@ -12,7 +12,7 @@ const complaintRoutes = require('./src/routes/complaintRoutes');
 const analyticsRoutes = require('./src/routes/analyticsRoutes');
 const mlRoutes = require("./src/routes/mlRoutes");
 
-// Initialize express app
+// Initialize express app 
 const app = express();
 
 // Connect to database
