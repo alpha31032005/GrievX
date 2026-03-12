@@ -1029,18 +1029,25 @@ const HomePage = () => {
               <h3 className="text-2xl font-bold">GrievX</h3>
             </div>
 
-            <div className="flex gap-3 mt-4 sm:mt-0">
-              {socialLinks.map(({ icon: Icon, href, label }) => (
-                <a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition"
-                >
-                  <Icon className="w-5 h-5" />
-                </a>
-              ))}
+            <div className="flex flex-wrap gap-3 mt-4 sm:mt-0">
+              {socialLinks.map(({ icon: Icon, href, label }) => {
+                const isEmail = href.startsWith('mailto:');
+
+                return (
+                  <a
+                    key={label}
+                    href={href}
+                    target={isEmail ? undefined : '_blank'}
+                    rel={isEmail ? undefined : 'noopener noreferrer'}
+                    aria-label={label}
+                    title={label}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-gray-800 rounded-lg hover:bg-blue-600 transition"
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span className="text-sm font-medium">{label}</span>
+                  </a>
+                );
+              })}
             </div>
           </div>
 
