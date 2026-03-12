@@ -50,19 +50,19 @@ app.use(
 // Request logging
 app.use(morgan('combined', { stream: { write: (msg) => logger.info(msg.trim()) } }));
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-  });
-});
-
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use("/api/ml", mlRoutes);
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+  });
+});
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -73,7 +73,7 @@ app.get('/', (req, res) => {
       auth: '/api/auth',
       complaints: '/api/complaints',
       analytics: '/api/analytics',
-      health: '/health',
+      health: '/api/health',
     },
   });
 });
@@ -106,7 +106,7 @@ app.listen(PORT, () => {
     ║ • Auth:       http://localhost:${PORT}/api/auth
     ║ • Complaints: http://localhost:${PORT}/api/complaints
     ║ • Analytics:  http://localhost:${PORT}/api/analytics
-    ║ • Health:     http://localhost:${PORT}/health
+    ║ • Health:     http://localhost:${PORT}/api/health
     ╚════════════════════════════════════════════════════════════╝
   `);
 });
