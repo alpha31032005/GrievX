@@ -18,6 +18,7 @@ import {
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import HelpChatbot from '../components/common/HelpChatbot';
 import {
   PieChart,
   Pie,
@@ -427,9 +428,20 @@ const HomePage = () => {
       { name: "View Analytics", href: "#", onClick: () => setActiveTab('analytics') },
     ],
     Resources: [
-      { name: "Help Center", href: "#" },
-      { name: "User Guide", href: "#" },
-      { name: "FAQ", href: "#" },
+      { name: "Help Center", href: "#", onClick: () => window.dispatchEvent(new Event('openHelpChatbot')) },
+      ...(isCitizen ? [
+        { name: "How to Report", href: "#", onClick: () => document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' }) },
+        // { name: "Track Your Complaint", href: "/citizen/track-status" },
+      ] : (isAdmin ? [
+        { name: "Managing Complaints", href: "/admin/manage" },
+        { name: "Department Analytics", href: "/admin/reports" },
+      ] : isChief ? [
+        { name: "System Overview", href: "/admin/dashboard" },
+        { name: "City-wide Analytics", href: "/admin/analytics" },
+      ] : [
+        { name: "Getting Started", href: "/register" },
+      ])),
+      { name: "FAQ", href: "#faq", onClick: () => document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' }) },
     ],
     Legal: [
       { name: "Privacy Policy", href: "#" },
@@ -934,6 +946,8 @@ const HomePage = () => {
                   <a
                     key={label}
                     href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="flex items-center gap-2 px-6 py-3 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition"
                   >
                     <Icon className="w-5 h-5" />
@@ -1020,6 +1034,8 @@ const HomePage = () => {
                 <a
                   key={label}
                   href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition"
                 >
                   <Icon className="w-5 h-5" />
@@ -1061,6 +1077,9 @@ const HomePage = () => {
           </div>
         </div>
       </footer>
+
+      {/* Help Chatbot */}
+      <HelpChatbot />
     </div>
   );
 };

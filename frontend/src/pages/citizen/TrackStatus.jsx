@@ -31,12 +31,14 @@ const StatusTracker = ({ currentStep }) => {
                 className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold transition-all duration-300 ${
                   isCompleted
                     ? 'bg-green-500 shadow-lg shadow-green-500/30'
+                    : isCurrent && isLast
+                    ? 'bg-green-500 shadow-lg shadow-green-500/30'
                     : isCurrent
                     ? 'bg-primary-600 shadow-lg shadow-primary-600/30 animate-pulse'
                     : 'bg-gray-300 dark:bg-gray-600'
                 }`}
               >
-                {isCompleted ? (
+                {isCompleted || (isCurrent && isLast) ? (
                   <FiCheck className="w-6 h-6" />
                 ) : isCurrent ? (
                   <FiLoader className="w-6 h-6 animate-spin" />
@@ -46,7 +48,7 @@ const StatusTracker = ({ currentStep }) => {
               </div>
               <span
                 className={`mt-2 text-sm font-semibold ${
-                  isCompleted
+                  isCompleted || (isCurrent && isLast)
                     ? 'text-green-600 dark:text-green-400'
                     : isCurrent
                     ? 'text-primary-600 dark:text-primary-400'

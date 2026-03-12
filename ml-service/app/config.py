@@ -44,7 +44,9 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: List[str] = [
         "http://localhost:3000",  # React dev server
         "http://localhost:5173",  # Vite dev server
+        "http://localhost:5000",  # Backend server
     ]
+    EXTRA_CORS_ORIGINS: str = ""  # Comma-separated production origins via env var
     
     # Logging
     LOG_LEVEL: str = "INFO"

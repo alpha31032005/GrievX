@@ -58,7 +58,7 @@ const CitizenDashboard = () => {
                 {user?.name || user?.email || 'Citizen User'}
               </h2>
               <p className="text-gray-600 dark:text-gray-400">
-                You are helping build a smarter community 💙
+                You are helping build a smarter community
               </p>
             </div>
           </div>

@@ -1,13 +1,13 @@
 const nodemailer = require('nodemailer');
 const logger = require('../utils/logger');
 
-// Create Mailtrap transporter
+// Create email transporter (uses env vars in production, Mailtrap fallback in dev)
 const transporter = nodemailer.createTransport({
-  host: 'sandbox.smtp.mailtrap.io',
-  port: 2525,
+  host: process.env.SMTP_HOST || 'sandbox.smtp.mailtrap.io',
+  port: parseInt(process.env.SMTP_PORT || '2525', 10),
   auth: {
-    user: 'e3b326997fd1c6',
-    pass: '286a4571e307c2',
+    user: process.env.SMTP_USER || 'e3b326997fd1c6',
+    pass: process.env.SMTP_PASS || '286a4571e307c2',
   },
 });
 
@@ -56,16 +56,18 @@ const sendEmail = async (options) => {
 const sendComplaintStatusUpdate = async (user, complaint, previousStatus) => {
   const statusMessages = {
     open: 'has been registered and is awaiting review',
-    'in-progress': 'is now being worked on',
+    in_progress: 'is now being worked on',
     resolved: 'has been successfully resolved',
     rejected: 'has been reviewed and marked as rejected',
+    closed: 'has been closed',
   };
 
   const statusColors = {
     open: '#3B82F6',
-    'in-progress': '#F59E0B',
+    in_progress: '#F59E0B',
     resolved: '#10B981',
     rejected: '#EF4444',
+    closed: '#6B7280',
   };
 
   const subject = `Update on Your Complaint #${complaint._id.toString().slice(-6)}`;

@@ -11,8 +11,11 @@ const createComplaintSimple = async (req, res) => {
   try {
     const { description, location, category, latitude, longitude, locationName } = req.body;
     
-    if (!description) {
-      return res.status(400).json({ success: false, message: 'Description is required' });
+    const hasDescription = description && description.trim();
+    const hasImage = !!req.file;
+
+    if (!hasDescription && !hasImage) {
+      return res.status(400).json({ success: false, message: 'At least a description or an image is required' });
     }
     
     if (!category) {
@@ -20,10 +23,11 @@ const createComplaintSimple = async (req, res) => {
     }
 
     // Build complaint data
+    const descText = hasDescription ? description.trim() : 'Image-based complaint';
     const complaintData = {
       userId: req.userId,
-      title: description.substring(0, 100), // Use first 100 chars as title
-      description: location ? `${description}\n\nLocation: ${location}` : description,
+      title: descText.substring(0, 100), // Use first 100 chars as title
+      description: location ? `${descText}\n\nLocation: ${location}` : descText,
       category: category.toLowerCase(),
       ward: 1, // Default ward, can be updated later
       severity: 'medium',

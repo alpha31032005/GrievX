@@ -1,10 +1,18 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import ImageUploader from "../../components/citizen/ImageUploader";
-import { FiCpu, FiLoader, FiCheckCircle, FiArrowLeft, FiHome, FiMapPin, FiNavigation, FiAlertCircle, FiRefreshCw } from "react-icons/fi";
+import { FiCpu, FiLoader, FiCheckCircle, FiArrowLeft, FiHome, FiMapPin, FiNavigation, FiAlertCircle, FiRefreshCw, FiFileText } from "react-icons/fi";
 import { useTheme } from "../../context/ThemeContext";
 import useGeolocation from "../../hooks/useGeolocation";
 import api from "../../services/api";
+
+const COMPLAINT_TEMPLATES = [
+  { department: "Roads", label: "Pothole on road", text: "There is a pothole on the road causing inconvenience and risk to commuters. Immediate repair is needed." },
+  { department: "Sanitation", label: "Garbage not collected", text: "Garbage has not been collected from the area for several days. It is causing unhygienic conditions and foul smell." },
+  { department: "Electricity", label: "Electric pole damaged", text: "An electric pole in the area is damaged and poses a safety hazard. Urgent attention is required." },
+  { department: "Street Utilities", label: "Street light not working", text: "A street light is not functioning, making the area dark and unsafe at night. Please repair it." },
+  { department: "Water", label: "Water leakage", text: "There is a water leakage from the pipeline causing water wastage and waterlogging in the area." },
+];
 
 const ComplaintForm = () => {
   const { isDark } = useTheme();
@@ -23,6 +31,7 @@ const ComplaintForm = () => {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [showTemplates, setShowTemplates] = useState(false);
 
   // Handle image upload and ML classification
   const uploadImage = async (file) => {
@@ -58,15 +67,16 @@ const ComplaintForm = () => {
   };
 
   // Classify text description
-  const classifyText = async () => {
-    if (!formData.description.trim()) return;
+  const classifyText = async (textOverride) => {
+    const text = typeof textOverride === "string" ? textOverride : formData.description;
+    if (!text.trim()) return;
     
     setLoading(true);
     setError("");
     
     try {
       const response = await api.post("/ml/text", {
-        text: formData.description,
+        text,
       });
       setTextPrediction(response.data);
       setLoading(false);
@@ -109,19 +119,17 @@ const ComplaintForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.description.trim()) {
-      setError("Please provide a description");
-      return;
-    }
-    
-    if (!formData.image) {
-      setError("Please upload an image");
+    const hasText = formData.description.trim().length > 0;
+    const hasImage = !!formData.image;
+
+    if (!hasText && !hasImage) {
+      setError("Please provide a description or upload an image (or both).");
       return;
     }
     
     const bestPrediction = getBestCategory();
     if (!bestPrediction) {
-      setError("Please wait for classification to complete");
+      setError("Please wait for AI classification to complete. Add a description or image first.");
       return;
     }
     
@@ -133,7 +141,9 @@ const ComplaintForm = () => {
       submitData.append("description", formData.description);
       submitData.append("location", formData.location);
       submitData.append("category", bestPrediction.category);
-      submitData.append("image", formData.image);
+      if (formData.image) {
+        submitData.append("image", formData.image);
+      }
       
       // Attach geo-coordinates if available
       if (geo.latitude && geo.longitude) {
@@ -213,15 +223,47 @@ const ComplaintForm = () => {
 
               {/* Description Field */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Description *
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Description
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowTemplates((v) => !v)}
+                    className="flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/40 transition"
+                  >
+                    <FiFileText className="w-4 h-4" />
+                    {showTemplates ? "Hide Templates" : "Select Templates"}
+                  </button>
+                </div>
+
+                {/* Complaint Templates */}
+                {showTemplates && (
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    {COMPLAINT_TEMPLATES.map((t) => (
+                      <button
+                        key={t.label}
+                        type="button"
+                        onClick={() => {
+                          setFormData((prev) => ({ ...prev, description: t.text }));
+                          setTextPrediction(null);
+                          setShowTemplates(false);
+                          classifyText(t.text);
+                        }}
+                        className="px-3 py-1.5 text-xs rounded-full border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 hover:border-primary-400 dark:hover:border-primary-500 transition"
+                      >
+                        <span className="font-semibold text-primary-600 dark:text-primary-400">{t.department}:</span>{" "}
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 <textarea
                   value={formData.description}
                   onChange={handleDescriptionChange}
                   onBlur={classifyText}
                   placeholder="Describe the civic issue in detail..."
-                  required
                   rows={4}
                   className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 focus:border-primary-500 dark:focus:border-primary-400 outline-none transition"
                 />
@@ -299,7 +341,7 @@ const ComplaintForm = () => {
               {/* Image Uploader */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Upload Image *
+                  Upload Image (optional)
                 </label>
                 <ImageUploader onUpload={uploadImage} />
               </div>
@@ -382,9 +424,9 @@ const ComplaintForm = () => {
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={submitting || loading || !formData.description || !formData.image}
+                disabled={submitting || loading || (!formData.description.trim() && !formData.image)}
                 className={`w-full py-4 rounded-lg font-semibold text-white shadow-lg transition-all flex items-center justify-center gap-2 ${
-                  submitting || loading || !formData.description || !formData.image
+                  submitting || loading || (!formData.description.trim() && !formData.image)
                     ? 'bg-gray-400 cursor-not-allowed'
                     : 'bg-primary-600 hover:bg-primary-700 hover:shadow-xl hover:scale-[1.02]'
                 }`}
