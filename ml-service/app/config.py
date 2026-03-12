@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     API_HOST: str = "0.0.0.0"
     API_PORT: int = Field(default=8000, env="PORT")  # Read from PORT env var, default to 8000
     API_RELOAD: bool = Field(default=False, env="API_RELOAD")  # Disable reload in production
+    PRELOAD_MODELS: bool = Field(default=False, env="PRELOAD_MODELS")
+    ENABLE_IMAGE_CLASSIFIER: bool = Field(default=False, env="ENABLE_IMAGE_CLASSIFIER")
     
     # Model Paths - Using absolute paths for Windows compatibility
     BASE_DIR: Path = Path(__file__).resolve().parent

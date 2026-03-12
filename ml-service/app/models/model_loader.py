@@ -4,9 +4,6 @@ Implements singleton pattern for efficient memory usage
 """
 
 import joblib
-import tensorflow as tf
-import keras
-from sentence_transformers import SentenceTransformer
 from loguru import logger
 from typing import Optional
 from pathlib import Path
@@ -78,7 +75,7 @@ class ModelLoader:
         
         return self._label_encoder
     
-    def load_embedder(self) -> SentenceTransformer:
+    def load_embedder(self):
         """
         Load mBERT sentence transformer for multilingual embeddings
         Supports Hindi, Marathi, English
@@ -86,6 +83,9 @@ class ModelLoader:
         """
         if self._embedder is None:
             try:
+                # Lazy import to avoid loading torch/transformers during app startup
+                from sentence_transformers import SentenceTransformer
+
                 # Try to load custom embedder first
                 custom_embedder_path = settings.MODELS_DIR / "multilingual_embedder"
                 
@@ -105,7 +105,7 @@ class ModelLoader:
         
         return self._embedder
     
-    def load_image_classifier(self) ->keras.Model:
+    def load_image_classifier(self):
         """
         Load the image classification model (.h5 file)
         WARNING: Model may be incompatible with TensorFlow 2.15+
@@ -114,6 +114,9 @@ class ModelLoader:
         """
         if self._image_model is None:
             try:
+                # Lazy import to avoid loading TensorFlow unless image inference is requested
+                import tensorflow as tf
+
                 logger.info(f"Loading image classifier from {settings.IMAGE_MODEL_PATH}")
                 
                 if not settings.IMAGE_MODEL_PATH.exists():

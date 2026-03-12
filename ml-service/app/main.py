@@ -64,6 +64,13 @@ async def startup_event():
     errors = []
     
     try:
+        if not settings.PRELOAD_MODELS:
+            logger.info("Model preloading is disabled (PRELOAD_MODELS=false)")
+            logger.info("Service will start in lazy-load mode to reduce memory usage")
+            logger.info(f"🌐 Server: http://{settings.API_HOST}:{settings.API_PORT}")
+            logger.info("📖 API Docs: /docs")
+            return
+
         logger.info("📦 Loading ML models...")
         
         # Load Text Classifier
@@ -97,16 +104,19 @@ async def startup_event():
             logger.error(f"✗ {error_msg}")
             errors.append(error_msg)
         
-        # Load Image Classifier
-        try:
-            model_loader.load_image_classifier()
-            models_status["image_classifier"] = True
-            logger.success("✓ Image classifier loaded")
-        except Exception as e:
-            error_msg = f"Image classifier failed: {str(e)}"
-            logger.warning(f"⚠ {error_msg}")
-            logger.warning("Image classification endpoints will be unavailable")
-            errors.append(error_msg)
+        # Load Image Classifier (optional in constrained environments)
+        if settings.ENABLE_IMAGE_CLASSIFIER:
+            try:
+                model_loader.load_image_classifier()
+                models_status["image_classifier"] = True
+                logger.success("✓ Image classifier loaded")
+            except Exception as e:
+                error_msg = f"Image classifier failed: {str(e)}"
+                logger.warning(f"⚠ {error_msg}")
+                logger.warning("Image classification endpoints will be unavailable")
+                errors.append(error_msg)
+        else:
+            logger.info("ℹ Image classifier disabled (ENABLE_IMAGE_CLASSIFIER=false)")
         
         logger.info("=" * 60)
         logger.info("📊 Models Status:")
